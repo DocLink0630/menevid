@@ -1,0 +1,413 @@
+// =============================================================================
+// Menavid Property Intelligence System — Prisma Schema
+// Ref: DCL-20260518-MNV | DocLink Technologies
+// DB: Supabase (PostgreSQL) | Auth: Supabase Auth
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// =============================================================================
+// ENUMS
+// =============================================================================
+
+enum PropertyType {
+  APARTMENT
+  HOUSE
+  LAND
+  COMMERCIAL
+}
+
+enum FurnishingStatus {
+  FURNISHED
+  SEMI_FURNISHED
+  UNFURNISHED
+}
+
+enum ListingPurpose {
+  RENT
+  SALE
+  RENT_AND_SALE
+}
+
+enum PropertyStatus {
+  AVAILABLE
+  RENTED
+  SOLD
+  TEMPORARILY_UNAVAILABLE
+}
+
+enum InquiryStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CLOSED
+}
+
+enum LeaseStatus {
+  ACTIVE
+  EXPIRED
+  TERMINATED
+}
+
+enum ReminderType {
+  RENEWAL_6_WEEKS
+  RENEWAL_4_WEEKS
+  PAYMENT_DUE
+  NEW_LISTING
+  CUSTOM
+}
+
+enum ReminderStatus {
+  PENDING
+  SENT
+  READ
+  DISMISSED
+}
+
+// =============================================================================
+// MODULE: USERS (mirrors Supabase Auth — auth.users)
+// Do NOT store passwords here. Supabase Auth handles all authentication.
+// This table extends auth.users with app-level profile data.
+// Create a Supabase trigger: on auth.users INSERT → insert into public.users
+// =============================================================================
+
+model User {
+  id        String   @id @db.Uuid          // matches auth.users.id from Supabase
+  name      String
+  email     String   @unique
+  role      String   @default("staff")     // "admin" | "staff"
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reminders    Reminder[]
+  activityLogs ActivityLog[]
+
+  @@map("users")
+}
+
+// =============================================================================
+// MODULE 1: PROPERTY LISTINGS
+// Covers apartments, houses, land, commercial units
+// Rental and sale share the same model
+// =============================================================================
+
+model Property {
+  id          String         @id @default(cuid())
+
+  // Core identity
+  name        String
+  unitNumber  String?
+  type        PropertyType
+  purpose     ListingPurpose
+
+  // Physical details
+  squareFootage Decimal?     @db.Decimal(10, 2)
+  bedrooms      Int?
+  furnishing    FurnishingStatus?
+
+  // Financials
+  monthlyRent Decimal?       @db.Decimal(10, 2)  // null if sale-only
+  salePrice   Decimal?       @db.Decimal(10, 2)  // null if rent-only
+
+  // Status & availability
+  status                    PropertyStatus @default(AVAILABLE)
+  temporaryUnavailableUntil DateTime?
+  availableFrom             DateTime?      // "rented now, available in X months"
+
+  // Meta
+  notes     String?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  // Relations
+  owners     PropertyOwnership[]
+  leases     Lease[]
+  inquiries  Inquiry[]
+  statusLogs PropertyStatusLog[]
+  reminders  Reminder[]
+
+  @@map("properties")
+}
+
+// =============================================================================
+// MODULE 1: PROPERTY OWNERS
+// Many-to-many between Property and Owner
+// Names only — no ownership percentage tracking
+// =============================================================================
+
+model Owner {
+  id        String   @id @default(cuid())
+  fullName  String
+  phone     String?
+  email     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  properties PropertyOwnership[]
+
+  @@map("owners")
+}
+
+model PropertyOwnership {
+  id         String   @id @default(cuid())
+  propertyId String
+  ownerId    String
+  isPrimary  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  owner    Owner    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, ownerId])
+  @@map("property_ownerships")
+}
+
+// =============================================================================
+// MODULE 1: PROPERTY STATUS LOG
+// Full history of every status change per unit
+// =============================================================================
+
+model PropertyStatusLog {
+  id         String         @id @default(cuid())
+  propertyId String
+  status     PropertyStatus
+  note       String?
+  changedAt  DateTime       @default(now())
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@map("property_status_logs")
+}
+
+// =============================================================================
+// MODULE 2: CRM — PART 1: OWNER LISTINGS
+// Clients who approach Menavid to list their property for sale or rent
+// Separate from the internal Owner table
+// =============================================================================
+
+model OwnerListing {
+  id       String @id @default(cuid())
+
+  // Contact
+  fullName String
+  email    String?
+  phone    String?
+
+  // Property details as submitted
+  propertyName  String?
+  propertyType  PropertyType?
+  bedrooms      Int?
+  squareFootage Decimal?       @db.Decimal(10, 2)
+  unitNumber    String?
+  purpose       ListingPurpose?
+  askingPrice   Decimal?       @db.Decimal(10, 2)
+  monthlyRent   Decimal?       @db.Decimal(10, 2)
+
+  // Menavid's role
+  isAgentAppointed Boolean @default(false)
+
+  // Pipeline status
+  remarks             String?
+  isConverted         Boolean @default(false)
+  convertedPropertyId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("owner_listings")
+}
+
+// =============================================================================
+// MODULE 2: CRM — PART 2: INQUIRIES
+// Potential buyers/tenants inquiring about a property
+// =============================================================================
+
+model Inquiry {
+  id         String        @id @default(cuid())
+  name       String
+  email      String?
+  phone      String?
+  remarks    String?
+  propertyId String?
+  status     InquiryStatus @default(NEW)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  property Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+
+  @@map("inquiries")
+}
+
+// =============================================================================
+// MODULE 2: CRM — EMAIL LOG
+// Outbound emails sent through the system
+// =============================================================================
+
+model EmailLog {
+  id             String   @id @default(cuid())
+  toEmail        String
+  toName         String?
+  subject        String
+  body           String
+  sentAt         DateTime @default(now())
+  inquiryId      String?
+  ownerListingId String?
+  leaseId        String?
+
+  @@map("email_logs")
+}
+
+// =============================================================================
+// MODULE 3: LEASES
+// One property can have many leases (current + historical)
+// Tenant info stored inline until Tenant module is built
+// =============================================================================
+
+model Lease {
+  id          String @id @default(cuid())
+  propertyId  String
+
+  // Tenant info (inline until Tenant module is scoped)
+  tenantName  String
+  tenantPhone String?
+  tenantEmail String?
+  tenantNic   String?
+
+  // Terms
+  startDate     DateTime
+  endDate       DateTime
+  rentAmount    Decimal  @db.Decimal(10, 2)
+  depositAmount Decimal? @db.Decimal(10, 2)
+
+  // Deposit tracking
+  depositRefunded   Boolean   @default(false)
+  depositRefundDate DateTime?
+  depositRefundNote String?
+
+  // Status
+  status        LeaseStatus @default(ACTIVE)
+  paymentDueDay Int         @default(1)  // day of month (1–28)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  property      Property       @relation(fields: [propertyId], references: [id], onDelete: Restrict)
+  rentRevisions RentRevision[]
+  payments      RentPayment[]
+  reminders     Reminder[]
+
+  @@map("leases")
+}
+
+// =============================================================================
+// MODULE 3: RENT REVISION HISTORY
+// Tracks rent changes on every renewal
+// =============================================================================
+
+model RentRevision {
+  id            String   @id @default(cuid())
+  leaseId       String
+  previousRent  Decimal  @db.Decimal(10, 2)
+  newRent       Decimal  @db.Decimal(10, 2)
+  effectiveDate DateTime
+  note          String?
+  createdAt     DateTime @default(now())
+
+  lease Lease @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+
+  @@map("rent_revisions")
+}
+
+// =============================================================================
+// MODULE 3: RENT PAYMENTS
+// Monthly payment records — drives 10-day-before-due reminders
+// =============================================================================
+
+model RentPayment {
+  id        String    @id @default(cuid())
+  leaseId   String
+  dueDate   DateTime
+  paidDate  DateTime?
+  amount    Decimal   @db.Decimal(10, 2)
+  isPaid    Boolean   @default(false)
+  note      String?
+  createdAt DateTime  @default(now())
+
+  lease Lease @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+
+  @@map("rent_payments")
+}
+
+// =============================================================================
+// MODULE 3: REMINDERS / NOTIFICATIONS
+// Persisted in DB with read/dismissed state
+// Triggers: renewal 6wk, renewal 4wk, payment due 10 days prior, new listing
+// =============================================================================
+
+model Reminder {
+  id         String         @id @default(cuid())
+  type       ReminderType
+  status     ReminderStatus @default(PENDING)
+  title      String
+  message    String
+  dueDate    DateTime
+  propertyId String?
+  leaseId    String?
+  userId     String?        @db.Uuid
+  sentAt     DateTime?
+  readAt     DateTime?
+  createdAt  DateTime       @default(now())
+
+  property Property? @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  lease    Lease?    @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+  user     User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("reminders")
+}
+
+// =============================================================================
+// MODULE 4: ACTIVITY LOG
+// Audit trail for reports & analytics
+// =============================================================================
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String?  @db.Uuid
+  action    String   // e.g. "LEASE_CREATED", "PROPERTY_STATUS_CHANGED"
+  entity    String   // e.g. "Lease", "Property", "Inquiry"
+  entityId  String?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("activity_logs")
+}
+
+// =============================================================================
+// PLACEHOLDER: TENANT MODULE
+// Held for future phase — uncomment when scoped
+// =============================================================================
+
+// model Tenant {
+//   id               String   @id @default(cuid())
+//   authId           String?  @unique @db.Uuid  // optional Supabase auth link
+//   fullName         String
+//   email            String?
+//   phone            String?
+//   nic              String?
+//   employer         String?
+//   emergencyContact String?
+//   createdAt        DateTime @default(now())
+//   updatedAt        DateTime @updatedAt
+//   @@map("tenants")
+// }
