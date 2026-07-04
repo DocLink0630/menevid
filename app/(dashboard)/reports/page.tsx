@@ -3,7 +3,14 @@ import { SummaryCards } from "@/components/reports/SummaryCards";
 import { UpcomingRenewalsTable } from "@/components/reports/UpcomingRenewalsTable";
 import { OverduePaymentsTable } from "@/components/reports/OverduePaymentsTable";
 import { ActivityLogTable } from "@/components/reports/ActivityLogTable";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ExportReportButton } from "@/components/reports/ExportReportButton";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   getPortfolioSummary,
   getUpcomingRenewals,
@@ -25,10 +32,23 @@ export default async function ReportsPage() {
         title="Reports"
         description="Portfolio analytics and activity"
       />
-      <SummaryCards summary={summary} />
+      <Card>
+        <CardHeader>
+          <CardTitle>Portfolio Summary</CardTitle>
+          <CardAction>
+            <ExportReportButton type="portfolio" />
+          </CardAction>
+        </CardHeader>
+        <CardContent>
+          <SummaryCards summary={summary} />
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader>
           <CardTitle>Upcoming Renewals</CardTitle>
+          <CardAction>
+            <ExportReportButton type="renewals" />
+          </CardAction>
         </CardHeader>
         <CardContent>
           <UpcomingRenewalsTable renewals={renewals} />
@@ -37,6 +57,9 @@ export default async function ReportsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Overdue Payments</CardTitle>
+          <CardAction>
+            <ExportReportButton type="overdue" />
+          </CardAction>
         </CardHeader>
         <CardContent>
           <OverduePaymentsTable payments={overdue} />
@@ -45,6 +68,9 @@ export default async function ReportsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Recent Activity</CardTitle>
+          <CardAction>
+            <ExportReportButton type="activity" />
+          </CardAction>
         </CardHeader>
         <CardContent>
           <ActivityLogTable activities={activity} />

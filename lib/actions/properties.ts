@@ -12,6 +12,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { ActivityActions } from "@/lib/constants/activity";
 import { logActivity } from "@/lib/actions/reports";
+import { createNewListingReminder } from "@/lib/utils/reminder-engine";
 
 const ownerInputSchema = z.object({
   ownerId: z.string(),
@@ -157,6 +158,16 @@ export async function createProperty(data: PropertyFormData) {
       });
     }
 
+    await createNewListingReminder(
+      {
+        id: created.id,
+        name: created.name,
+        unitNumber: created.unitNumber,
+      },
+      user.id,
+      tx,
+    );
+
     return created;
   });
 
@@ -172,6 +183,7 @@ export async function createProperty(data: PropertyFormData) {
   revalidatePath("/properties");
   revalidatePath("/crm/owner-listings");
   revalidatePath("/reports");
+  revalidatePath("/reminders");
   return { success: true as const, data: { id: property.id } };
 }
 
@@ -303,11 +315,11 @@ export async function deleteProperty(id: string) {
   }
 
   await prisma.property.delete({ where: { id } });
-  await logActivity(user.id, ActivityActions.PROPERTY_UPDATED, "Property", id, {
-    deleted: true,
-  });
+  await logActivity(user.id, ActivityActions.PROPERTY_DELETED, "Property", id);
 
   revalidatePath("/properties");
+  revalidatePath("/reports");
+  revalidatePath("/reminders");
   return { success: true as const };
 }
 

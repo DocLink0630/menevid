@@ -56,8 +56,8 @@ export default function LoginPage() {
     <div className="grid min-h-screen lg:grid-cols-2">
       {/* Brand panel */}
       <div className="relative hidden overflow-hidden bg-primary lg:flex lg:flex-col lg:justify-between lg:p-12">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,oklch(0.58_0.16_145/0.35),transparent_60%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,oklch(0.32_0.08_145/0.45),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,oklch(0.58_0.16_230/0.35),transparent_60%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,oklch(0.32_0.08_230/0.45),transparent_50%)]" />
         <div className="relative flex items-center gap-3">
           <div className="flex size-10 items-center justify-center rounded-xl bg-white/15 backdrop-blur-sm">
             <Building2 className="size-5 text-primary-foreground" />

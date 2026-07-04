@@ -45,7 +45,7 @@ export function Topbar({ userEmail, onMenuClick }: TopbarProps) {
           <div className="flex size-8 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
             {getInitials(userEmail)}
           </div>
-          <span className="text-sm text-muted-foreground max-w-[180px] truncate">
+          <span className="text-base text-muted-foreground max-w-[180px] truncate">
             {userEmail}
           </span>
         </div>

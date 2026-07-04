@@ -21,9 +21,9 @@ const leaseSchema = z.object({
   tenantNic: z.string().optional(),
   startDate: z.string().min(1),
   endDate: z.string().min(1),
-  rentAmount: z.number().positive(),
-  depositAmount: z.number().optional(),
-  paymentDueDay: z.number().int().min(1).max(28),
+  rentAmount: z.coerce.number().positive(),
+  depositAmount: z.coerce.number().optional(),
+  paymentDueDay: z.coerce.number().int().min(1).max(28),
 });
 
 const renewSchema = z.object({
