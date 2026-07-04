@@ -161,3 +161,33 @@ export async function generateLeaseReminders(
     }
   }
 }
+
+export async function createNewListingReminder(
+  property: { id: string; name: string; unitNumber: string | null },
+  userId: string,
+  tx: TransactionClient,
+) {
+  const existing = await tx.reminder.findFirst({
+    where: {
+      type: "NEW_LISTING",
+      propertyId: property.id,
+      status: { in: ["PENDING", "SENT"] },
+    },
+  });
+  if (existing) return;
+
+  const label = property.unitNumber
+    ? `${property.name} (${property.unitNumber})`
+    : property.name;
+
+  await tx.reminder.create({
+    data: {
+      type: "NEW_LISTING",
+      title: "New portfolio listing",
+      message: `${label} was added to the portfolio.`,
+      dueDate: new Date(),
+      propertyId: property.id,
+      userId,
+    },
+  });
+}

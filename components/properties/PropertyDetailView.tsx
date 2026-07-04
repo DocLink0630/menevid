@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/shared/ButtonLink";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -16,6 +19,7 @@ import {
 import { PropertyStatusBadge } from "@/components/properties/PropertyStatusBadge";
 import { StatusChangeDialog } from "@/components/properties/StatusChangeDialog";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
+import { deleteProperty } from "@/lib/actions/properties";
 import type { PropertyStatus } from "@prisma/client";
 
 type PropertyDetailProps = {
@@ -72,9 +76,26 @@ type PropertyDetailProps = {
 };
 
 export function PropertyDetailView({ property }: PropertyDetailProps) {
+  const router = useRouter();
   const [statusOpen, setStatusOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const activeLease = property.leases.find((l) => l.status === "ACTIVE");
   const pastLeases = property.leases.filter((l) => l.status !== "ACTIVE");
+
+  async function handleDelete() {
+    setDeleting(true);
+    const result = await deleteProperty(property.id);
+    if ("error" in result && result.error) {
+      toast.error(result.error);
+      setDeleting(false);
+      setDeleteOpen(false);
+      return;
+    }
+    toast.success("Property deleted");
+    router.push("/properties");
+    router.refresh();
+  }
 
   return (
     <div className="space-y-6">
@@ -82,6 +103,13 @@ export function PropertyDetailView({ property }: PropertyDetailProps) {
         <ButtonLink href={`/properties/${property.id}/edit`}>Edit</ButtonLink>
         <Button variant="outline" onClick={() => setStatusOpen(true)}>
           Change Status
+        </Button>
+        <Button
+          variant="destructive"
+          onClick={() => setDeleteOpen(true)}
+          disabled={!!activeLease}
+        >
+          Delete
         </Button>
       </div>
 
@@ -268,6 +296,20 @@ export function PropertyDetailView({ property }: PropertyDetailProps) {
         currentStatus={property.status}
         open={statusOpen}
         onOpenChange={setStatusOpen}
+      />
+      <ConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Delete property?"
+        description={
+          activeLease
+            ? "This property has an active lease and cannot be deleted."
+            : `Permanently delete "${property.name}"? This cannot be undone.`
+        }
+        confirmLabel="Delete"
+        destructive
+        loading={deleting}
+        onConfirm={handleDelete}
       />
     </div>
   );

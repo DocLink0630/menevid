@@ -20,6 +20,18 @@ function displayNameFromSession(
   return name || email.split("@")[0];
 }
 
+async function ensureAdminUser(user: User): Promise<User> {
+  if (user.role === "admin" && user.isActive) return user;
+
+  return prisma.user.update({
+    where: { id: user.id },
+    data: {
+      role: "admin",
+      isActive: true,
+    },
+  });
+}
+
 export async function getCurrentUser(): Promise<User | null> {
   const session = await getSession();
   if (!session?.user) return null;
@@ -27,29 +39,33 @@ export async function getCurrentUser(): Promise<User | null> {
   const existing = await prisma.user.findUnique({
     where: { id: session.user.id },
   });
-  if (existing) return existing;
+  if (existing) return ensureAdminUser(existing);
 
   const email = session.user.email;
   if (!email) return null;
 
-  return prisma.user.upsert({
+  const user = await prisma.user.upsert({
     where: { id: session.user.id },
     create: {
       id: session.user.id,
       email,
       name: displayNameFromSession(email, session.user.user_metadata),
-      role: "staff",
+      role: "admin",
     },
     update: {
       email,
       name: displayNameFromSession(email, session.user.user_metadata),
+      role: "admin",
+      isActive: true,
     },
   });
+
+  return user;
 }
 
 export async function requireUser(): Promise<User> {
   const user = await getCurrentUser();
-  if (!user) {
+  if (!user || user.role !== "admin" || !user.isActive) {
     throw new Error("Unauthorized");
   }
   return user;

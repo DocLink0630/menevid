@@ -24,14 +24,17 @@ export function SummaryCards({ summary }: SummaryCardsProps) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {cards.map((card) => (
-        <Card key={card.title}>
+        <Card
+          key={card.title}
+          className="border-l-4 border-l-primary shadow-sm"
+        >
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-base font-medium text-muted-foreground">
               {card.title}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">{card.value}</p>
+            <p className="text-4xl font-bold tracking-tight">{card.value}</p>
           </CardContent>
         </Card>
       ))}

@@ -12,7 +12,6 @@ type SeedUser = {
   email: string;
   password: string;
   name: string;
-  role: "admin" | "staff";
 };
 
 function requireEnv(name: string, ...aliases: string[]): string {
@@ -28,43 +27,30 @@ function requireEnv(name: string, ...aliases: string[]): string {
 }
 
 function getSeedUsers(): SeedUser[] {
-  const password =
-    process.env.SEED_USER_PASSWORD ?? "Menavid@2026";
-
-  const users: SeedUser[] = [];
-
+  const password = process.env.SEED_USER_PASSWORD ?? "Menavid@2026";
   const adminEmail = process.env.SEED_ADMIN_EMAIL ?? "admin@menavid.lk";
   const adminName = process.env.SEED_ADMIN_NAME ?? "Menavid Admin";
-  users.push({
-    email: adminEmail,
-    password,
-    name: adminName,
-    role: "admin",
-  });
 
-  const staffEmail = process.env.SEED_STAFF_EMAIL;
-  if (staffEmail) {
-    users.push({
-      email: staffEmail,
+  return [
+    {
+      email: adminEmail,
       password,
-      name: process.env.SEED_STAFF_NAME ?? "Menavid Staff",
-      role: "staff",
-    });
-  }
-
-  return users;
+      name: adminName,
+    },
+  ];
 }
 
-async function seedAuthUser(
-  supabase: SupabaseClient,
-  user: SeedUser,
-) {
+async function seedAuthUser(supabase: SupabaseClient, user: SeedUser) {
   const existing = await prisma.user.findUnique({
     where: { email: user.email },
   });
 
   if (existing) {
-    console.log(`User already exists in database: ${user.email}`);
+    await prisma.user.update({
+      where: { id: existing.id },
+      data: { name: user.name, role: "admin", isActive: true },
+    });
+    console.log(`Updated existing user to admin: ${user.email}`);
     return existing.id;
   }
 
@@ -88,7 +74,7 @@ async function seedAuthUser(
       {
         password: user.password,
         email_confirm: true,
-        user_metadata: { name: user.name },
+        user_metadata: { name: user.name, role: "admin" },
       },
     );
 
@@ -102,7 +88,7 @@ async function seedAuthUser(
       email: user.email,
       password: user.password,
       email_confirm: true,
-      user_metadata: { name: user.name, role: user.role },
+      user_metadata: { name: user.name, role: "admin" },
     });
 
     if (error || !data.user) {
@@ -120,19 +106,19 @@ async function seedAuthUser(
     update: {
       name: user.name,
       email: user.email,
-      role: user.role,
+      role: "admin",
       isActive: true,
     },
     create: {
       id: userId,
       name: user.name,
       email: user.email,
-      role: user.role,
+      role: "admin",
       isActive: true,
     },
   });
 
-  console.log(`Synced public.users row: ${user.email} (${user.role})`);
+  console.log(`Synced public.users row: ${user.email} (admin)`);
   return userId;
 }
 
@@ -156,7 +142,7 @@ async function main() {
 
   const users = getSeedUsers();
 
-  console.log(`Seeding ${users.length} user(s)...`);
+  console.log(`Seeding ${users.length} admin user(s)...`);
 
   for (const user of users) {
     await seedAuthUser(supabase, user);
@@ -166,7 +152,7 @@ async function main() {
   console.log("");
   console.log("Login credentials:");
   for (const user of users) {
-    console.log(`  ${user.role.padEnd(5)} ${user.email}`);
+    console.log(`  admin  ${user.email}`);
   }
   console.log(`  password: ${process.env.SEED_USER_PASSWORD ?? "Menavid@2026"}`);
 }
