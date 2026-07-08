@@ -56,7 +56,7 @@ export function PaymentScheduleTable({ payments }: { payments: Payment[] }) {
           <TableRow key={p.id}>
             <TableCell>{formatDate(p.dueDate)}</TableCell>
             <TableCell>{formatCurrency(p.amount)}</TableCell>
-            <TableCell>{p.paidDate ? formatDate(p.paidDate) : "—"}</TableCell>
+            <TableCell>{p.paidDate ? formatDate(p.paidDate) : "-"}</TableCell>
             <TableCell>
               <Badge variant="outline" className={p.isPaid ? "bg-green-50" : ""}>
                 {p.isPaid ? "Paid" : "Unpaid"}

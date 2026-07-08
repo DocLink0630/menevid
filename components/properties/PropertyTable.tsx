@@ -62,7 +62,7 @@ export function PropertyTable({
               </Link>
             ),
           },
-          { header: "Unit No.", cell: (row) => row.unitNumber ?? "—" },
+          { header: "Unit No.", cell: (row) => row.unitNumber ?? "-" },
           { header: "Type", cell: (row) => row.type },
           {
             header: "Purpose",
@@ -75,7 +75,7 @@ export function PropertyTable({
           {
             header: "Available From",
             cell: (row) => {
-              if (!row.availableFrom) return "—";
+              if (!row.availableFrom) return "-";
               const days = daysUntil(row.availableFrom);
               if (days > 0 && days <= 60) {
                 return (
@@ -92,19 +92,19 @@ export function PropertyTable({
             cell: (row) => {
               if (row.monthlyRent) return formatCurrency(row.monthlyRent);
               if (row.salePrice) return formatCurrency(row.salePrice);
-              return "—";
+              return "-";
             },
           },
           {
             header: "Bedrooms",
-            cell: (row) => row.bedrooms ?? "—",
+            cell: (row) => row.bedrooms ?? "-",
           },
           {
             header: "Primary Owner",
             cell: (row) =>
               row.owners.find((o) => o.isPrimary)?.fullName ??
               row.owners[0]?.fullName ??
-              "—",
+              "-",
           },
           {
             header: "Actions",

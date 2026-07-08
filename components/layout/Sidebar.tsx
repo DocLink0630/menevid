@@ -102,7 +102,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         </nav>
         <div className="border-t border-sidebar-border p-4">
           <p className="text-xs text-sidebar-foreground/50 text-center">
-            Menavid Realtors © {new Date().getFullYear()}
+            Copyright {new Date().getFullYear()} Menavid Realtors
           </p>
         </div>
       </aside>

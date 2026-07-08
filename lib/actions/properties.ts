@@ -38,6 +38,13 @@ const propertySchema = z
     fromListingId: z.string().optional(),
   })
   .superRefine((data, ctx) => {
+    if (data.type === "HOUSE" && data.squareFootage == null) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Size of the land is required for houses",
+        path: ["squareFootage"],
+      });
+    }
     if (
       (data.purpose === "RENT" || data.purpose === "RENT_AND_SALE") &&
       data.monthlyRent == null

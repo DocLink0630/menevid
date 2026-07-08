@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { BackButton } from "@/components/shared/BackButton";
 import { PropertyDetailView } from "@/components/properties/PropertyDetailView";
 import { getProperty } from "@/lib/actions/properties";
 
@@ -14,6 +15,7 @@ export default async function PropertyDetailPage({ params }: Props) {
 
   return (
     <div className="space-y-6">
+      <BackButton href="/properties" label="Back to Properties" />
       <PageHeader title={property.name} description="Property details" />
       <PropertyDetailView property={property} />
     </div>

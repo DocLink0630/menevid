@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { BackButton } from "@/components/shared/BackButton";
 import { OwnerListingDetail } from "@/components/crm/OwnerListingDetail";
 import { getOwnerListing } from "@/lib/actions/crm";
 
@@ -14,6 +15,7 @@ export default async function OwnerListingDetailPage({ params }: Props) {
 
   return (
     <div className="space-y-6">
+      <BackButton href="/crm/owner-listings" label="Back to Listings" />
       <PageHeader title={listing.fullName} description="Owner listing details" />
       <OwnerListingDetail listing={listing} />
     </div>

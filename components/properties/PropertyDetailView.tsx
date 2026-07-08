@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Mail, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/shared/ButtonLink";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
@@ -131,12 +132,17 @@ export function PropertyDetailView({ property }: PropertyDetailProps) {
               </CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3 sm:grid-cols-2 text-sm">
-              <div><span className="text-muted-foreground">Unit:</span> {property.unitNumber ?? "—"}</div>
+              <div><span className="text-muted-foreground">Unit:</span> {property.unitNumber ?? "-"}</div>
               <div><span className="text-muted-foreground">Type:</span> {property.type}</div>
               <div><span className="text-muted-foreground">Purpose:</span> {property.purpose.replace(/_/g, " ")}</div>
-              <div><span className="text-muted-foreground">Bedrooms:</span> {property.bedrooms ?? "—"}</div>
-              <div><span className="text-muted-foreground">Sqft:</span> {property.squareFootage ?? "—"}</div>
-              <div><span className="text-muted-foreground">Furnishing:</span> {property.furnishing?.replace(/_/g, " ") ?? "—"}</div>
+              <div><span className="text-muted-foreground">Bedrooms:</span> {property.bedrooms ?? "-"}</div>
+              <div>
+                <span className="text-muted-foreground">
+                  {property.type === "HOUSE" ? "Size of the Land:" : "Sqft:"}
+                </span>{" "}
+                {property.squareFootage ?? "-"}
+              </div>
+              <div><span className="text-muted-foreground">Furnishing:</span> {property.furnishing?.replace(/_/g, " ") ?? "-"}</div>
               <div><span className="text-muted-foreground">Monthly Rent:</span> {formatCurrency(property.monthlyRent)}</div>
               <div><span className="text-muted-foreground">Sale Price:</span> {formatCurrency(property.salePrice)}</div>
               <div><span className="text-muted-foreground">Available From:</span> {formatDate(property.availableFrom)}</div>
@@ -148,12 +154,31 @@ export function PropertyDetailView({ property }: PropertyDetailProps) {
           <Card>
             <CardHeader><CardTitle>Owners</CardTitle></CardHeader>
             <CardContent>
-              <ul className="space-y-2">
+              <ul className="space-y-3">
                 {property.owners.map((o) => (
-                  <li key={o.ownerId} className="text-sm">
-                    {o.fullName} {o.isPrimary ? "(Primary)" : ""}
-                    {o.phone ? ` · ${o.phone}` : ""}
-                    {o.email ? ` · ${o.email}` : ""}
+                  <li key={o.ownerId} className="space-y-1 text-sm">
+                    <p className="font-medium">
+                      {o.fullName}
+                      {o.isPrimary ? (
+                        <span className="ml-2 text-xs font-normal text-muted-foreground">
+                          (Primary)
+                        </span>
+                      ) : null}
+                    </p>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground">
+                      {o.phone ? (
+                        <span className="inline-flex items-center gap-1.5">
+                          <Phone className="size-3.5" />
+                          {o.phone}
+                        </span>
+                      ) : null}
+                      {o.email ? (
+                        <span className="inline-flex items-center gap-1.5">
+                          <Mail className="size-3.5" />
+                          {o.email}
+                        </span>
+                      ) : null}
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -176,7 +201,7 @@ export function PropertyDetailView({ property }: PropertyDetailProps) {
                   {property.statusLogs.map((log) => (
                     <TableRow key={log.id}>
                       <TableCell><PropertyStatusBadge status={log.status} /></TableCell>
-                      <TableCell>{log.note ?? "—"}</TableCell>
+                      <TableCell>{log.note ?? "-"}</TableCell>
                       <TableCell>{formatDate(log.changedAt)}</TableCell>
                     </TableRow>
                   ))}
@@ -192,7 +217,7 @@ export function PropertyDetailView({ property }: PropertyDetailProps) {
               <CardHeader><CardTitle>Active Lease</CardTitle></CardHeader>
               <CardContent className="text-sm space-y-1">
                 <p>Tenant: {activeLease.tenantName}</p>
-                <p>Period: {formatDate(activeLease.startDate)} – {formatDate(activeLease.endDate)}</p>
+                <p>Period: {formatDate(activeLease.startDate)} to {formatDate(activeLease.endDate)}</p>
                 <p>Rent: {formatCurrency(activeLease.rentAmount)}</p>
                 <ButtonLink size="sm" className="mt-2" href={`/leases/${activeLease.id}`}>
                   View Lease
@@ -219,7 +244,7 @@ export function PropertyDetailView({ property }: PropertyDetailProps) {
                     {pastLeases.map((l) => (
                       <TableRow key={l.id}>
                         <TableCell>{l.tenantName}</TableCell>
-                        <TableCell>{formatDate(l.startDate)} – {formatDate(l.endDate)}</TableCell>
+                        <TableCell>{formatDate(l.startDate)} to {formatDate(l.endDate)}</TableCell>
                         <TableCell>{l.status}</TableCell>
                         <TableCell>
                           <ButtonLink variant="ghost" size="xs" href={`/leases/${l.id}`}>

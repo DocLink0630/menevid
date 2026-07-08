@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { BackButton } from "@/components/shared/BackButton";
 import { PropertyForm } from "@/components/properties/PropertyForm";
 import { getProperty } from "@/lib/actions/properties";
 
@@ -17,6 +18,7 @@ export default async function EditPropertyPage({ params }: Props) {
 
   return (
     <div className="space-y-6">
+      <BackButton href={`/properties/${id}`} label="Back to Property" />
       <PageHeader title="Edit Property" description={property.name} />
       <PropertyForm
         propertyId={id}

@@ -4,6 +4,10 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { LeaseAgreementPDF } from "@/lib/utils/lease-pdf";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
+import {
+  decodePaymentDue,
+  paymentFrequencyLabel,
+} from "@/lib/utils/payment-frequency";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -25,6 +29,8 @@ export async function GET(_request: Request, { params }: Props) {
     return new NextResponse("Not found", { status: 404 });
   }
 
+  const payment = decodePaymentDue(lease.paymentDueDay);
+
   const pdfBuffer = await renderToBuffer(
     <LeaseAgreementPDF
       propertyName={lease.property.name}
@@ -45,7 +51,8 @@ export async function GET(_request: Request, { params }: Props) {
               .trim()
           : "0"
       }
-      paymentDueDay={lease.paymentDueDay}
+      paymentDueDay={payment.day}
+      paymentFrequency={paymentFrequencyLabel(payment.frequencyMonths)}
     />,
   );
 

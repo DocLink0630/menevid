@@ -25,6 +25,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Command,
   CommandEmpty,
   CommandGroup,
@@ -40,6 +47,10 @@ import {
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createLease, updateLease } from "@/lib/actions/leases";
+import {
+  PAYMENT_FREQUENCIES,
+  type PaymentFrequencyMonths,
+} from "@/lib/utils/payment-frequency";
 
 const optionalNumber = z.preprocess((val) => {
   if (val === "" || val === null || val === undefined) return undefined;
@@ -47,17 +58,23 @@ const optionalNumber = z.preprocess((val) => {
   return Number.isNaN(n) ? undefined : n;
 }, z.number().optional());
 
-const requiredNumber = z.preprocess((val) => {
+const requiredPositive = z.preprocess((val) => {
   if (val === "" || val === null || val === undefined) return undefined;
   const n = Number(val);
   return Number.isNaN(n) ? undefined : n;
-}, z.number({ error: "Required" }).positive("Rent amount must be greater than 0"));
+}, z.number().positive("Rent amount must be greater than 0"));
 
-const paymentDueDayNumber = z.preprocess((val) => {
+const dayNumber = z.preprocess((val) => {
   if (val === "" || val === null || val === undefined) return undefined;
   const n = Number(val);
   return Number.isNaN(n) ? undefined : Math.trunc(n);
-}, z.number({ error: "Required" }).int().min(1).max(28));
+}, z.number().int().min(1).max(28));
+
+const freqNumber = z.preprocess((val) => {
+  if (val === "" || val === null || val === undefined) return 1;
+  const n = Number(val);
+  return Number.isNaN(n) ? 1 : Math.trunc(n);
+}, z.number().refine((v) => [1, 3, 4, 6, 12].includes(v), "Invalid frequency"));
 
 const schema = z.object({
   propertyId: z.string().min(1, "Property is required"),
@@ -67,9 +84,10 @@ const schema = z.object({
   tenantNic: z.string().optional(),
   startDate: z.string().min(1, "Start date is required"),
   endDate: z.string().min(1, "End date is required"),
-  rentAmount: requiredNumber,
+  rentAmount: requiredPositive,
   depositAmount: optionalNumber,
-  paymentDueDay: paymentDueDayNumber,
+  paymentDueDay: dayNumber,
+  paymentFrequencyMonths: freqNumber,
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -101,7 +119,15 @@ export function LeaseForm({ properties, leaseId, defaultValues }: LeaseFormProps
   const form = useForm<FormValues>({
     resolver: zodResolver(schema) as Resolver<FormValues>,
     defaultValues: {
+      propertyId: "",
+      tenantName: "",
+      tenantPhone: "",
+      tenantEmail: "",
+      tenantNic: "",
+      startDate: "",
+      endDate: "",
       paymentDueDay: 1,
+      paymentFrequencyMonths: 1,
       ...defaultValues,
     },
   });
@@ -110,9 +136,13 @@ export function LeaseForm({ properties, leaseId, defaultValues }: LeaseFormProps
     setLoading(true);
     setError(null);
     try {
+      const payload = {
+        ...values,
+        paymentFrequencyMonths: values.paymentFrequencyMonths as PaymentFrequencyMonths,
+      };
       const result = leaseId
-        ? await updateLease(leaseId, values)
-        : await createLease(values);
+        ? await updateLease(leaseId, payload)
+        : await createLease(payload);
       if ("error" in result && result.error) {
         setError(result.error);
         toast.error(result.error);
@@ -125,9 +155,13 @@ export function LeaseForm({ properties, leaseId, defaultValues }: LeaseFormProps
         router.push(`/leases/${(result.data as { id: string }).id}`);
       }
       router.refresh();
-    } catch {
-      toast.error("Something went wrong. Please try again.");
-      setError("Something went wrong. Please try again.");
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Something went wrong. Please try again.";
+      toast.error(message);
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -182,7 +216,7 @@ export function LeaseForm({ properties, leaseId, defaultValues }: LeaseFormProps
                             {properties.map((p) => (
                               <CommandItem
                                 key={p.id}
-                                value={p.id}
+                                value={`${p.name} ${p.unitNumber ?? ""} ${p.id}`}
                                 onSelect={() => {
                                   field.onChange(p.id);
                                   setOpen(false);
@@ -302,8 +336,17 @@ export function LeaseForm({ properties, leaseId, defaultValues }: LeaseFormProps
                   <FormItem>
                     <FormLabel>Rent Amount (LKR) *</FormLabel>
                     <FormControl>
-                      <Input type="number" min={0} step="0.01" {...field} />
+                      <Input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                      />
                     </FormControl>
+                    <FormDescription>
+                      Amount charged each payment period
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -315,26 +358,65 @@ export function LeaseForm({ properties, leaseId, defaultValues }: LeaseFormProps
                   <FormItem>
                     <FormLabel>Deposit (LKR)</FormLabel>
                     <FormControl>
-                      <Input type="number" min={0} step="0.01" {...field} />
+                      <Input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-            <FormField
-              control={form.control}
-              name="paymentDueDay"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Payment Due Day (1–28) *</FormLabel>
-                  <FormControl>
-                    <Input type="number" min={1} max={28} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="paymentFrequencyMonths"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Payment Frequency *</FormLabel>
+                    <Select
+                      value={String(field.value ?? 1)}
+                      onValueChange={(v) => field.onChange(Number(v))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select frequency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PAYMENT_FREQUENCIES.map((opt) => (
+                          <SelectItem key={opt.value} value={String(opt.value)}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="paymentDueDay"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Payment Due Day (1-28) *</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={28}
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             {error ? (
               <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
                 {error}

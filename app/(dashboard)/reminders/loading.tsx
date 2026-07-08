@@ -1,10 +1,15 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+  PageHeaderSkeleton,
+  ReminderListSkeleton,
+  TabsSkeleton,
+} from "@/components/shared/loading-skeletons";
 
 export default function RemindersLoading() {
   return (
     <div className="space-y-6">
-      <Skeleton className="h-10 w-48" />
-      <Skeleton className="h-64 w-full" />
+      <PageHeaderSkeleton />
+      <TabsSkeleton />
+      <ReminderListSkeleton count={5} />
     </div>
   );
 }

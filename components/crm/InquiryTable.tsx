@@ -47,8 +47,8 @@ export function InquiryTable({
             </Link>
           ),
         },
-        { header: "Phone", cell: (row) => row.phone ?? "—" },
-        { header: "Email", cell: (row) => row.email ?? "—" },
+        { header: "Phone", cell: (row) => row.phone ?? "-" },
+        { header: "Email", cell: (row) => row.email ?? "-" },
         {
           header: "Linked Property",
           cell: (row) =>
@@ -57,7 +57,7 @@ export function InquiryTable({
                 {row.property.name}
               </Link>
             ) : (
-              "—"
+              "-"
             ),
         },
         {
@@ -73,7 +73,7 @@ export function InquiryTable({
           header: "Remarks",
           cell: (row) => (
             <span className="max-w-[200px] truncate block">
-              {row.remarks ?? "—"}
+              {row.remarks ?? "-"}
             </span>
           ),
         },
