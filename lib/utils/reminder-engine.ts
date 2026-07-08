@@ -8,6 +8,7 @@ import {
 } from "date-fns";
 import type { Lease, Prisma } from "@prisma/client";
 import { ReminderType } from "@prisma/client";
+import { decodePaymentDue } from "@/lib/utils/payment-frequency";
 
 type TransactionClient = Omit<
   Prisma.TransactionClient,
@@ -22,10 +23,15 @@ function clampDueDate(year: number, month: number, day: number): Date {
 }
 
 export async function generatePaymentSchedule(
-  lease: Pick<Lease, "id" | "startDate" | "endDate" | "rentAmount" | "paymentDueDay">,
+  lease: Pick<
+    Lease,
+    "id" | "startDate" | "endDate" | "rentAmount" | "paymentDueDay"
+  >,
   tx: TransactionClient,
   fromDate?: Date,
 ) {
+  const { day, frequencyMonths } = decodePaymentDue(lease.paymentDueDay);
+
   const scheduleStart = fromDate
     ? startOfMonth(addMonths(fromDate, 1))
     : startOfMonth(lease.startDate);
@@ -42,18 +48,19 @@ export async function generatePaymentSchedule(
     const dueDate = clampDueDate(
       current.getFullYear(),
       current.getMonth(),
-      lease.paymentDueDay,
+      day,
     );
 
     if (!isBefore(dueDate, lease.startDate) && !isAfter(dueDate, scheduleEnd)) {
       payments.push({
         leaseId: lease.id,
         dueDate,
+        // Stored rentAmount is the period rent for the chosen frequency
         amount: Number(lease.rentAmount),
       });
     }
 
-    current = addMonths(current, 1);
+    current = addMonths(current, frequencyMonths);
   }
 
   if (payments.length > 0) {
@@ -79,7 +86,10 @@ async function reminderExists(
 }
 
 export async function generateLeaseReminders(
-  lease: Pick<Lease, "id" | "endDate" | "propertyId" | "tenantName" | "rentAmount">,
+  lease: Pick<
+    Lease,
+    "id" | "endDate" | "propertyId" | "tenantName" | "rentAmount"
+  >,
   propertyName: string,
   userId: string,
   tx: TransactionClient,

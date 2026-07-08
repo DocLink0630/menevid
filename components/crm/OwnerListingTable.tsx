@@ -16,7 +16,6 @@ type ListingRow = {
   squareFootage: number | null;
   askingPrice: number | null;
   monthlyRent: number | null;
-  isAgentAppointed: boolean;
   isConverted: boolean;
   convertedPropertyId: string | null;
 };
@@ -51,31 +50,22 @@ export function OwnerListingTable({
             </Link>
           ),
         },
-        { header: "Phone", cell: (row) => row.phone ?? "—" },
-        { header: "Email", cell: (row) => row.email ?? "—" },
-        { header: "Type", cell: (row) => row.propertyType ?? "—" },
+        { header: "Phone", cell: (row) => row.phone ?? "-" },
+        { header: "Email", cell: (row) => row.email ?? "-" },
+        { header: "Type", cell: (row) => row.propertyType ?? "-" },
         {
           header: "Purpose",
-          cell: (row) => row.purpose?.replace(/_/g, " ") ?? "—",
+          cell: (row) => row.purpose?.replace(/_/g, " ") ?? "-",
         },
-        { header: "Bedrooms", cell: (row) => row.bedrooms ?? "—" },
-        { header: "Sqft", cell: (row) => row.squareFootage ?? "—" },
+        { header: "Bedrooms", cell: (row) => row.bedrooms ?? "-" },
+        { header: "Sqft", cell: (row) => row.squareFootage ?? "-" },
         {
           header: "Price/Rent",
           cell: (row) => {
             if (row.askingPrice) return formatCurrency(row.askingPrice);
             if (row.monthlyRent) return formatCurrency(row.monthlyRent);
-            return "—";
+            return "-";
           },
-        },
-        {
-          header: "Agent",
-          cell: (row) =>
-            row.isAgentAppointed ? (
-              <Badge>Appointed</Badge>
-            ) : (
-              <span className="text-muted-foreground">No</span>
-            ),
         },
         {
           header: "Status",

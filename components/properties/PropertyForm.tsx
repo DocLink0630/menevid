@@ -66,6 +66,13 @@ const formSchema = z
     notes: z.string().optional(),
   })
   .superRefine((data, ctx) => {
+    if (data.type === "HOUSE" && !data.squareFootage) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Size of the land is required for houses",
+        path: ["squareFootage"],
+      });
+    }
     if (
       (data.purpose === "RENT" || data.purpose === "RENT_AND_SALE") &&
       !data.monthlyRent
@@ -150,6 +157,8 @@ export function PropertyForm({
     watchPurpose === "RENT" || watchPurpose === "RENT_AND_SALE";
   const showSale =
     watchPurpose === "SALE" || watchPurpose === "RENT_AND_SALE";
+  const isHouse = watchType === "HOUSE";
+  const sizeLabel = isHouse ? "Size of the Land" : "Square Footage";
 
   async function onSubmit(values: FormValues) {
     if (owners.length === 0) {
@@ -275,9 +284,19 @@ export function PropertyForm({
           name="squareFootage"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Square Footage</FormLabel>
+              <FormLabel>
+                {sizeLabel}
+                {isHouse ? " *" : ""}
+              </FormLabel>
               <FormControl>
-                <Input type="number" {...field} />
+                <Input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  placeholder={isHouse ? "e.g. perch / sqft of land" : undefined}
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -291,7 +310,11 @@ export function PropertyForm({
               <FormItem>
                 <FormLabel>Bedrooms</FormLabel>
                 <FormControl>
-                  <Input type="number" {...field} />
+                  <Input
+                    type="number"
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -333,7 +356,11 @@ export function PropertyForm({
               <FormItem>
                 <FormLabel>Monthly Rent (LKR)</FormLabel>
                 <FormControl>
-                  <Input type="number" {...field} />
+                  <Input
+                    type="number"
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

@@ -11,7 +11,8 @@ import {
   generatePaymentSchedule,
   generateLeaseReminders,
 } from "@/lib/utils/reminder-engine";
-import { differenceInMonths } from "date-fns";
+import { encodePaymentDue } from "@/lib/utils/payment-frequency";
+import { differenceInCalendarMonths } from "date-fns";
 
 const leaseSchema = z.object({
   propertyId: z.string().min(1),
@@ -23,7 +24,15 @@ const leaseSchema = z.object({
   endDate: z.string().min(1),
   rentAmount: z.coerce.number().positive(),
   depositAmount: z.coerce.number().optional(),
+  /** Day of month 1-28 */
   paymentDueDay: z.coerce.number().int().min(1).max(28),
+  /** Payment interval in months: 1, 3, 4, 6, 12 */
+  paymentFrequencyMonths: z.coerce
+    .number()
+    .refine((v) => [1, 3, 4, 6, 12].includes(v), {
+      message: "Invalid payment frequency",
+    })
+    .default(1),
 });
 
 const renewSchema = z.object({
@@ -38,7 +47,7 @@ const refundSchema = z.object({
 });
 
 function monthsBetween(start: Date, end: Date) {
-  return differenceInMonths(end, start);
+  return differenceInCalendarMonths(end, start);
 }
 
 export async function createLease(data: z.infer<typeof leaseSchema>) {
@@ -52,6 +61,14 @@ export async function createLease(data: z.infer<typeof leaseSchema>) {
 
   const startDate = new Date(parsed.data.startDate);
   const endDate = new Date(parsed.data.endDate);
+
+  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+    return { error: "Invalid lease dates" };
+  }
+
+  if (endDate <= startDate) {
+    return { error: "End date must be after start date" };
+  }
 
   if (monthsBetween(startDate, endDate) < 6) {
     return { error: "Minimum lease duration is 6 months" };
@@ -69,53 +86,68 @@ export async function createLease(data: z.infer<typeof leaseSchema>) {
   });
   if (!property) return { error: "Property not found" };
 
-  const lease = await prisma.$transaction(async (tx) => {
-    const created = await tx.lease.create({
-      data: {
-        propertyId: parsed.data.propertyId,
-        tenantName: parsed.data.tenantName,
-        tenantPhone: parsed.data.tenantPhone || null,
-        tenantEmail: parsed.data.tenantEmail || null,
-        tenantNic: parsed.data.tenantNic || null,
-        startDate,
-        endDate,
-        rentAmount: parsed.data.rentAmount,
-        depositAmount: parsed.data.depositAmount ?? null,
-        paymentDueDay: parsed.data.paymentDueDay,
-        status: "ACTIVE",
-      },
+  const paymentDueDayEncoded = encodePaymentDue(
+    parsed.data.paymentDueDay,
+    parsed.data.paymentFrequencyMonths as 1 | 3 | 4 | 6 | 12,
+  );
+
+  try {
+    const lease = await prisma.$transaction(async (tx) => {
+      const created = await tx.lease.create({
+        data: {
+          propertyId: parsed.data.propertyId,
+          tenantName: parsed.data.tenantName,
+          tenantPhone: parsed.data.tenantPhone || null,
+          tenantEmail: parsed.data.tenantEmail || null,
+          tenantNic: parsed.data.tenantNic || null,
+          startDate,
+          endDate,
+          rentAmount: parsed.data.rentAmount,
+          depositAmount: parsed.data.depositAmount ?? null,
+          paymentDueDay: paymentDueDayEncoded,
+          status: "ACTIVE",
+        },
+      });
+
+      await tx.property.update({
+        where: { id: parsed.data.propertyId },
+        data: { status: "RENTED" },
+      });
+
+      await tx.propertyStatusLog.create({
+        data: {
+          propertyId: parsed.data.propertyId,
+          status: "RENTED",
+          note: `Lease created for ${parsed.data.tenantName}`,
+        },
+      });
+
+      const payments = await generatePaymentSchedule(created, tx);
+      await generateLeaseReminders(
+        created,
+        property.name,
+        user.id,
+        tx,
+        payments,
+      );
+
+      return created;
     });
 
-    await tx.property.update({
-      where: { id: parsed.data.propertyId },
-      data: { status: "RENTED" },
-    });
-
-    await tx.propertyStatusLog.create({
-      data: {
-        propertyId: parsed.data.propertyId,
-        status: "RENTED",
-        note: `Lease created for ${parsed.data.tenantName}`,
-      },
-    });
-
-    const payments = await generatePaymentSchedule(created, tx);
-    await generateLeaseReminders(
-      created,
-      property.name,
-      user.id,
-      tx,
-      payments,
-    );
-
-    return created;
-  });
-
-  await logActivity(user.id, ActivityActions.LEASE_CREATED, "Lease", lease.id);
-  revalidatePath("/leases");
-  revalidatePath("/properties");
-  revalidatePath("/reminders");
-  return { success: true as const, data: { id: lease.id } };
+    await logActivity(user.id, ActivityActions.LEASE_CREATED, "Lease", lease.id);
+    revalidatePath("/leases");
+    revalidatePath("/properties");
+    revalidatePath("/reminders");
+    return { success: true as const, data: { id: lease.id } };
+  } catch (err) {
+    console.error("createLease failed", err);
+    return {
+      error:
+        err instanceof Error
+          ? err.message
+          : "Failed to create lease. Please try again.",
+    };
+  }
 }
 
 export async function updateLease(
@@ -125,16 +157,30 @@ export async function updateLease(
   const user = await getCurrentUser();
   if (!user) return { error: "Unauthorized" };
 
+  const updateData: {
+    tenantName?: string;
+    tenantPhone?: string | null;
+    tenantEmail?: string | null;
+    tenantNic?: string | null;
+    depositAmount?: number;
+    paymentDueDay?: number;
+  } = {
+    tenantName: data.tenantName,
+    tenantPhone: data.tenantPhone || null,
+    tenantEmail: data.tenantEmail || null,
+    tenantNic: data.tenantNic || null,
+    depositAmount: data.depositAmount ?? undefined,
+  };
+
+  if (data.paymentDueDay != null) {
+    const freq =
+      (data.paymentFrequencyMonths as 1 | 3 | 4 | 6 | 12 | undefined) ?? 1;
+    updateData.paymentDueDay = encodePaymentDue(data.paymentDueDay, freq);
+  }
+
   await prisma.lease.update({
     where: { id },
-    data: {
-      tenantName: data.tenantName,
-      tenantPhone: data.tenantPhone || null,
-      tenantEmail: data.tenantEmail || null,
-      tenantNic: data.tenantNic || null,
-      depositAmount: data.depositAmount ?? undefined,
-      paymentDueDay: data.paymentDueDay,
-    },
+    data: updateData,
   });
 
   revalidatePath(`/leases/${id}`);

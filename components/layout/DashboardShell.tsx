@@ -13,7 +13,7 @@ export function DashboardShell({ children, userEmail }: DashboardShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-primary/5">
+    <div className="min-h-screen bg-[oklch(0.97_0.014_145)]">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="lg:pl-64">
         <Topbar

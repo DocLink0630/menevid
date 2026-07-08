@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { BackButton } from "@/components/shared/BackButton";
 import { LeaseDetailView } from "@/components/leases/LeaseDetailView";
 import { getLease } from "@/lib/actions/leases";
 
@@ -14,8 +15,9 @@ export default async function LeaseDetailPage({ params }: Props) {
 
   return (
     <div className="space-y-6">
+      <BackButton href="/leases" label="Back to Leases" />
       <PageHeader
-        title={`Lease — ${lease.tenantName}`}
+        title={`Lease: ${lease.tenantName}`}
         description={lease.property.name}
       />
       <LeaseDetailView lease={lease} />

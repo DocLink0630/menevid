@@ -92,15 +92,15 @@ export function InquiryDetail({ inquiry }: InquiryDetailProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-2 sm:grid-cols-2 text-sm">
-          <div><span className="text-muted-foreground">Email:</span> {inquiry.email ?? "—"}</div>
-          <div><span className="text-muted-foreground">Phone:</span> {inquiry.phone ?? "—"}</div>
+          <div><span className="text-muted-foreground">Email:</span> {inquiry.email ?? "-"}</div>
+          <div><span className="text-muted-foreground">Phone:</span> {inquiry.phone ?? "-"}</div>
           <div>
             <span className="text-muted-foreground">Property:</span>{" "}
             {inquiry.property ? (
               <Link href={`/properties/${inquiry.property.id}`} className="hover:underline">
                 {inquiry.property.name}
               </Link>
-            ) : "—"}
+            ) : "-"}
           </div>
           <div><span className="text-muted-foreground">Created:</span> {formatDate(inquiry.createdAt)}</div>
           {inquiry.remarks ? (

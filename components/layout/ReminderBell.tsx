@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Bell } from "lucide-react";
+import { Bell, BellOff } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import {
   Popover,
@@ -57,9 +57,10 @@ export function ReminderBell() {
           <p className="text-xs text-muted-foreground">Recent notifications</p>
         </div>
         {reminders.length === 0 ? (
-          <p className="px-4 py-8 text-sm text-muted-foreground text-center">
-            No pending reminders
-          </p>
+          <div className="flex flex-col items-center px-4 py-8 text-center">
+            <BellOff className="mb-2 size-8 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">No pending reminders</p>
+          </div>
         ) : (
           <div className="max-h-72 overflow-y-auto">
             {reminders.map((r) => (

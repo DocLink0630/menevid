@@ -1,15 +1,19 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+  CardBlockSkeleton,
+  PageHeaderSkeleton,
+  SummaryGridSkeleton,
+  TableSkeleton,
+} from "@/components/shared/loading-skeletons";
 
 export default function ReportsLoading() {
   return (
     <div className="space-y-6">
-      <Skeleton className="h-10 w-48" />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-24" />
-        ))}
-      </div>
-      <Skeleton className="h-64" />
+      <PageHeaderSkeleton />
+      <CardBlockSkeleton rows={1} />
+      <SummaryGridSkeleton count={6} />
+      <TableSkeleton rows={5} />
+      <TableSkeleton rows={5} />
+      <TableSkeleton rows={6} />
     </div>
   );
 }

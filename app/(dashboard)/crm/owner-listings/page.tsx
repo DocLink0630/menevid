@@ -55,14 +55,6 @@ export default async function OwnerListingsPage({ searchParams }: Props) {
                 { value: "false", label: "Active" },
               ],
             },
-            {
-              key: "isAgentAppointed",
-              label: "Agent",
-              options: [
-                { value: "true", label: "Appointed" },
-                { value: "false", label: "Not Appointed" },
-              ],
-            },
           ]}
         />
       </Suspense>

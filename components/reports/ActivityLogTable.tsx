@@ -59,7 +59,7 @@ export function ActivityLogTable({ activities }: { activities: Activity[] }) {
                     {a.entityId.slice(0, 8)}...
                   </Link>
                 ) : (
-                  a.entityId ?? "—"
+                  a.entityId ?? "-"
                 )}
               </TableCell>
               <TableCell>{a.userName}</TableCell>

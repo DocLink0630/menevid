@@ -43,7 +43,7 @@ export function UpcomingRenewalsTable({ renewals }: { renewals: Renewal[] }) {
                 {r.propertyName}
               </Link>
             </TableCell>
-            <TableCell>{r.unitNumber ?? "—"}</TableCell>
+            <TableCell>{r.unitNumber ?? "-"}</TableCell>
             <TableCell>{r.tenantName}</TableCell>
             <TableCell>{formatDate(r.endDate)}</TableCell>
             <TableCell>{daysUntil(r.endDate)} days</TableCell>

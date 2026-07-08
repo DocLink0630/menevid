@@ -32,6 +32,7 @@ type LeasePDFProps = {
   rentAmount: string;
   depositAmount: string;
   paymentDueDay: number;
+  paymentFrequency: string;
 };
 
 export function LeaseAgreementPDF({
@@ -46,6 +47,7 @@ export function LeaseAgreementPDF({
   rentAmount,
   depositAmount,
   paymentDueDay,
+  paymentFrequency,
 }: LeasePDFProps) {
   return (
     <Document>
@@ -102,7 +104,7 @@ export function LeaseAgreementPDF({
             <Text style={styles.value}>{startDate} to {endDate}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>Monthly Rent:</Text>
+            <Text style={styles.label}>Rent Amount:</Text>
             <Text style={styles.value}>LKR {rentAmount}</Text>
           </View>
           <View style={styles.row}>
@@ -110,8 +112,12 @@ export function LeaseAgreementPDF({
             <Text style={styles.value}>LKR {depositAmount}</Text>
           </View>
           <View style={styles.row}>
+            <Text style={styles.label}>Payment Frequency:</Text>
+            <Text style={styles.value}>{paymentFrequency}</Text>
+          </View>
+          <View style={styles.row}>
             <Text style={styles.label}>Payment Due Day:</Text>
-            <Text style={styles.value}>{paymentDueDay} of each month</Text>
+            <Text style={styles.value}>Day {paymentDueDay} of the period</Text>
           </View>
         </View>
 

@@ -13,7 +13,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -46,7 +45,6 @@ const schema = z.object({
   unitNumber: z.string().optional(),
   askingPrice: z.coerce.number().optional(),
   monthlyRent: z.coerce.number().optional(),
-  isAgentAppointed: z.boolean().optional(),
   remarks: z.string().optional(),
 });
 
@@ -66,7 +64,6 @@ export function OwnerListingForm({
     resolver: zodResolver(schema) as Resolver<FormValues>,
     defaultValues: {
       fullName: "",
-      isAgentAppointed: false,
       ...defaultValues,
     },
   });
@@ -149,12 +146,6 @@ export function OwnerListingForm({
             <FormItem><FormLabel>Monthly Rent (LKR)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
         ) : null}
-        <FormField control={form.control} name="isAgentAppointed" render={({ field }) => (
-          <FormItem className="flex items-center gap-2">
-            <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-            <FormLabel className="!mt-0">Agent Appointed</FormLabel>
-          </FormItem>
-        )} />
         <FormField control={form.control} name="remarks" render={({ field }) => (
           <FormItem><FormLabel>Remarks</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
         )} />

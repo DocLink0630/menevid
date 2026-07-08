@@ -1,11 +1,15 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+  PageHeaderSkeleton,
+  TableSkeleton,
+  ToolbarSkeleton,
+} from "@/components/shared/loading-skeletons";
 
 export default function PropertiesLoading() {
   return (
     <div className="space-y-6">
-      <Skeleton className="h-10 w-48" />
-      <Skeleton className="h-10 w-full max-w-sm" />
-      <Skeleton className="h-96 w-full" />
+      <PageHeaderSkeleton />
+      <ToolbarSkeleton />
+      <TableSkeleton rows={10} />
     </div>
   );
 }

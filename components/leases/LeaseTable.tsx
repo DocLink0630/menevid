@@ -38,7 +38,7 @@ export function LeaseTable({
           header: "Property",
           cell: (row) => row.propertyName,
         },
-        { header: "Unit", cell: (row) => row.unitNumber ?? "—" },
+        { header: "Unit", cell: (row) => row.unitNumber ?? "-" },
         { header: "Tenant", cell: (row) => row.tenantName },
         { header: "Start", cell: (row) => formatDate(row.startDate) },
         { header: "End", cell: (row) => formatDate(row.endDate) },

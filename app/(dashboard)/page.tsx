@@ -9,6 +9,12 @@ import {
   getRecentActivity,
 } from "@/lib/actions/reports";
 import { getUnreadReminderCount } from "@/lib/actions/reminders";
+import {
+  AlertCircle,
+  Bell,
+  CalendarClock,
+  FileText,
+} from "lucide-react";
 
 export default async function DashboardPage() {
   const [summary, renewals, overdue, activity, reminderCount] =
@@ -20,6 +26,31 @@ export default async function DashboardPage() {
       getUnreadReminderCount(),
     ]);
 
+  const statCards = [
+    {
+      title: "Pending Reminders",
+      value: reminderCount,
+      icon: Bell,
+      action: { label: "View", href: "/reminders" },
+    },
+    {
+      title: "Upcoming Renewals",
+      value: renewals.length,
+      icon: CalendarClock,
+    },
+    {
+      title: "Overdue Payments",
+      value: overdue.length,
+      icon: AlertCircle,
+      valueClassName: "text-destructive",
+    },
+    {
+      title: "Active Leases",
+      value: summary.totalActiveLeases,
+      icon: FileText,
+    },
+  ];
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -27,53 +58,41 @@ export default async function DashboardPage() {
         description="Welcome to Menavid Property Intelligence"
       />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">
-              Pending Reminders
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex items-center justify-between">
-            <p className="text-3xl font-bold">{reminderCount}</p>
-            <ButtonLink size="sm" variant="outline" href="/reminders">
-              View
-            </ButtonLink>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">
-              Upcoming Renewals
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{renewals.length}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">
-              Overdue Payments
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-destructive">
-              {overdue.length}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">
-              Active Leases
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">
-              {summary.totalActiveLeases}
-            </p>
-          </CardContent>
-        </Card>
+        {statCards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <Card key={card.title}>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm text-muted-foreground">
+                  {card.title}
+                </CardTitle>
+                <Icon className="size-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent
+                className={
+                  card.action
+                    ? "flex items-center justify-between"
+                    : undefined
+                }
+              >
+                <p
+                  className={`text-3xl font-bold ${card.valueClassName ?? ""}`}
+                >
+                  {card.value}
+                </p>
+                {card.action ? (
+                  <ButtonLink
+                    size="sm"
+                    variant="outline"
+                    href={card.action.href}
+                  >
+                    {card.action.label}
+                  </ButtonLink>
+                ) : null}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
       <Card>
         <CardHeader>

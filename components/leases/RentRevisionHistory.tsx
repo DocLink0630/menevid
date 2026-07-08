@@ -37,7 +37,7 @@ export function RentRevisionHistory({ revisions }: { revisions: Revision[] }) {
             <TableCell>{formatCurrency(r.previousRent)}</TableCell>
             <TableCell>{formatCurrency(r.newRent)}</TableCell>
             <TableCell>{formatDate(r.effectiveDate)}</TableCell>
-            <TableCell>{r.note ?? "—"}</TableCell>
+            <TableCell>{r.note ?? "-"}</TableCell>
           </TableRow>
         ))}
       </TableBody>

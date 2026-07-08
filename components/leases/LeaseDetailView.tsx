@@ -16,6 +16,10 @@ import { DepositRefundForm } from "@/components/leases/DepositRefundForm";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import { markLeaseExpired } from "@/lib/actions/leases";
+import {
+  decodePaymentDue,
+  paymentFrequencyLabel,
+} from "@/lib/utils/payment-frequency";
 import type { LeaseStatus } from "@prisma/client";
 
 type LeaseDetailViewProps = {
@@ -111,13 +115,22 @@ export function LeaseDetailView({ lease }: LeaseDetailViewProps) {
             </Link>
           </div>
           <div><span className="text-muted-foreground">Tenant:</span> {lease.tenantName}</div>
-          <div><span className="text-muted-foreground">Phone:</span> {lease.tenantPhone ?? "—"}</div>
-          <div><span className="text-muted-foreground">Email:</span> {lease.tenantEmail ?? "—"}</div>
-          <div><span className="text-muted-foreground">NIC:</span> {lease.tenantNic ?? "—"}</div>
-          <div><span className="text-muted-foreground">Period:</span> {formatDate(lease.startDate)} – {formatDate(lease.endDate)}</div>
+          <div><span className="text-muted-foreground">Phone:</span> {lease.tenantPhone ?? "-"}</div>
+          <div><span className="text-muted-foreground">Email:</span> {lease.tenantEmail ?? "-"}</div>
+          <div><span className="text-muted-foreground">NIC:</span> {lease.tenantNic ?? "-"}</div>
+          <div><span className="text-muted-foreground">Period:</span> {formatDate(lease.startDate)} to {formatDate(lease.endDate)}</div>
           <div><span className="text-muted-foreground">Rent:</span> {formatCurrency(lease.rentAmount)}</div>
           <div><span className="text-muted-foreground">Deposit:</span> {formatCurrency(lease.depositAmount)}</div>
-          <div><span className="text-muted-foreground">Payment Due Day:</span> {lease.paymentDueDay}</div>
+          <div>
+            <span className="text-muted-foreground">Payment Frequency:</span>{" "}
+            {paymentFrequencyLabel(
+              decodePaymentDue(lease.paymentDueDay).frequencyMonths,
+            )}
+          </div>
+          <div>
+            <span className="text-muted-foreground">Payment Due Day:</span>{" "}
+            {decodePaymentDue(lease.paymentDueDay).day}
+          </div>
         </CardContent>
       </Card>
 

@@ -1,3 +1,4 @@
+import { BellOff } from "lucide-react";
 import { ReminderItem } from "@/components/reminders/ReminderItem";
 import type { ReminderStatus, ReminderType } from "@prisma/client";
 
@@ -27,9 +28,10 @@ export function ReminderList({ reminders, filter = "all" }: ReminderListProps) {
 
   if (filtered.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground text-center py-8">
-        No reminders in this category.
-      </p>
+      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12 text-center">
+        <BellOff className="mb-3 size-10 text-muted-foreground" />
+        <p className="text-muted-foreground">No reminders in this category.</p>
+      </div>
     );
   }
 

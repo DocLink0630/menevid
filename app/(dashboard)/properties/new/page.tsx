@@ -1,4 +1,5 @@
 import { PageHeader } from "@/components/shared/PageHeader";
+import { BackButton } from "@/components/shared/BackButton";
 import { PropertyForm } from "@/components/properties/PropertyForm";
 import { getOwnerListingForConvert } from "@/lib/actions/properties";
 
@@ -31,6 +32,7 @@ export default async function NewPropertyPage({ searchParams }: Props) {
 
   return (
     <div className="space-y-6">
+      <BackButton href="/properties" label="Back to Properties" />
       <PageHeader
         title="New Property"
         description={

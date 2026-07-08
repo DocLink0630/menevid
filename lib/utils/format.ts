@@ -1,5 +1,7 @@
+export const EMPTY = "-";
+
 export function formatDate(date: Date | string | null | undefined): string {
-  if (!date) return "—";
+  if (!date) return EMPTY;
   return new Date(date).toLocaleDateString("en-LK", {
     year: "numeric",
     month: "short",
@@ -8,7 +10,7 @@ export function formatDate(date: Date | string | null | undefined): string {
 }
 
 export function formatCurrency(amount: number | string | null | undefined): string {
-  if (amount === null || amount === undefined) return "—";
+  if (amount === null || amount === undefined) return EMPTY;
   return new Intl.NumberFormat("en-LK", {
     style: "currency",
     currency: "LKR",
