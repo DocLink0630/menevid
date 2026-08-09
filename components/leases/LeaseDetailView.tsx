@@ -20,7 +20,7 @@ import {
   decodePaymentDue,
   paymentFrequencyLabel,
 } from "@/lib/utils/payment-frequency";
-import type { LeaseStatus } from "@prisma/client";
+import type { Currency, LeaseStatus } from "@prisma/client";
 
 type LeaseDetailViewProps = {
   lease: {
@@ -33,6 +33,7 @@ type LeaseDetailViewProps = {
     endDate: Date;
     rentAmount: number;
     depositAmount: number | null;
+    currency: Currency;
     depositRefunded: boolean;
     depositRefundDate: Date | null;
     depositRefundNote: string | null;
@@ -119,8 +120,9 @@ export function LeaseDetailView({ lease }: LeaseDetailViewProps) {
           <div><span className="text-muted-foreground">Email:</span> {lease.tenantEmail ?? "-"}</div>
           <div><span className="text-muted-foreground">NIC:</span> {lease.tenantNic ?? "-"}</div>
           <div><span className="text-muted-foreground">Period:</span> {formatDate(lease.startDate)} to {formatDate(lease.endDate)}</div>
-          <div><span className="text-muted-foreground">Rent:</span> {formatCurrency(lease.rentAmount)}</div>
-          <div><span className="text-muted-foreground">Deposit:</span> {formatCurrency(lease.depositAmount)}</div>
+          <div><span className="text-muted-foreground">Currency:</span> {lease.currency}</div>
+          <div><span className="text-muted-foreground">Rent:</span> {formatCurrency(lease.rentAmount, lease.currency)}</div>
+          <div><span className="text-muted-foreground">Deposit:</span> {formatCurrency(lease.depositAmount, lease.currency)}</div>
           <div>
             <span className="text-muted-foreground">Payment Frequency:</span>{" "}
             {paymentFrequencyLabel(
@@ -137,14 +139,14 @@ export function LeaseDetailView({ lease }: LeaseDetailViewProps) {
       <Card>
         <CardHeader><CardTitle>Rent Revision History</CardTitle></CardHeader>
         <CardContent>
-          <RentRevisionHistory revisions={lease.rentRevisions} />
+          <RentRevisionHistory revisions={lease.rentRevisions} currency={lease.currency} />
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader><CardTitle>Payment Schedule</CardTitle></CardHeader>
         <CardContent>
-          <PaymentScheduleTable payments={lease.payments} />
+          <PaymentScheduleTable payments={lease.payments} currency={lease.currency} />
         </CardContent>
       </Card>
 
@@ -163,6 +165,7 @@ export function LeaseDetailView({ lease }: LeaseDetailViewProps) {
       <RenewLeaseDialog
         leaseId={lease.id}
         currentRent={lease.rentAmount}
+        currentCurrency={lease.currency}
         currentEndDate={lease.endDate}
         open={renewOpen}
         onOpenChange={setRenewOpen}

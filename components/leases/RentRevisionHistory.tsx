@@ -7,6 +7,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
+import type { Currency } from "@prisma/client";
 
 type Revision = {
   id: string;
@@ -16,7 +17,13 @@ type Revision = {
   note: string | null;
 };
 
-export function RentRevisionHistory({ revisions }: { revisions: Revision[] }) {
+export function RentRevisionHistory({
+  revisions,
+  currency = "LKR",
+}: {
+  revisions: Revision[];
+  currency?: Currency;
+}) {
   if (revisions.length === 0) {
     return <p className="text-sm text-muted-foreground">No rent revisions.</p>;
   }
@@ -34,8 +41,8 @@ export function RentRevisionHistory({ revisions }: { revisions: Revision[] }) {
       <TableBody>
         {revisions.map((r) => (
           <TableRow key={r.id}>
-            <TableCell>{formatCurrency(r.previousRent)}</TableCell>
-            <TableCell>{formatCurrency(r.newRent)}</TableCell>
+            <TableCell>{formatCurrency(r.previousRent, currency)}</TableCell>
+            <TableCell>{formatCurrency(r.newRent, currency)}</TableCell>
             <TableCell>{formatDate(r.effectiveDate)}</TableCell>
             <TableCell>{r.note ?? "-"}</TableCell>
           </TableRow>

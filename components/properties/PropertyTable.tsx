@@ -9,7 +9,12 @@ import { DataTable } from "@/components/shared/DataTable";
 import { PropertyStatusBadge } from "@/components/properties/PropertyStatusBadge";
 import { StatusChangeDialog } from "@/components/properties/StatusChangeDialog";
 import { formatCurrency, formatDate, daysUntil } from "@/lib/utils/format";
-import type { PropertyStatus, PropertyType, ListingPurpose } from "@prisma/client";
+import type {
+  PropertyStatus,
+  PropertyType,
+  ListingPurpose,
+  Currency,
+} from "@prisma/client";
 
 type PropertyRow = {
   id: string;
@@ -21,6 +26,7 @@ type PropertyRow = {
   availableFrom: Date | null;
   monthlyRent: number | null;
   salePrice: number | null;
+  currency: Currency;
   bedrooms: number | null;
   owners: { id: string; fullName: string; isPrimary: boolean }[];
 };
@@ -90,8 +96,8 @@ export function PropertyTable({
           {
             header: "Rent/Sale Price",
             cell: (row) => {
-              if (row.monthlyRent) return formatCurrency(row.monthlyRent);
-              if (row.salePrice) return formatCurrency(row.salePrice);
+              if (row.monthlyRent) return formatCurrency(row.monthlyRent, row.currency);
+              if (row.salePrice) return formatCurrency(row.salePrice, row.currency);
               return "-";
             },
           },

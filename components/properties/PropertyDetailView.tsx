@@ -21,7 +21,7 @@ import { PropertyStatusBadge } from "@/components/properties/PropertyStatusBadge
 import { StatusChangeDialog } from "@/components/properties/StatusChangeDialog";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import { deleteProperty } from "@/lib/actions/properties";
-import type { PropertyStatus } from "@prisma/client";
+import type { Currency, PropertyStatus } from "@prisma/client";
 
 type PropertyDetailProps = {
   property: {
@@ -35,6 +35,7 @@ type PropertyDetailProps = {
     furnishing: string | null;
     monthlyRent: number | null;
     salePrice: number | null;
+    currency: Currency;
     status: PropertyStatus;
     temporaryUnavailableUntil: Date | null;
     availableFrom: Date | null;
@@ -58,6 +59,7 @@ type PropertyDetailProps = {
       startDate: Date;
       endDate: Date;
       rentAmount: number;
+      currency: Currency;
       status: string;
     }[];
     inquiries: {
@@ -138,13 +140,18 @@ export function PropertyDetailView({ property }: PropertyDetailProps) {
               <div><span className="text-muted-foreground">Bedrooms:</span> {property.bedrooms ?? "-"}</div>
               <div>
                 <span className="text-muted-foreground">
-                  {property.type === "HOUSE" ? "Size of the Land:" : "Sqft:"}
+                  {property.type === "HOUSE"
+                    ? "Size of the Land:"
+                    : property.type === "LAND" || property.type === "COMMERCIAL"
+                      ? "Perches:"
+                      : "Sqft:"}
                 </span>{" "}
                 {property.squareFootage ?? "-"}
               </div>
               <div><span className="text-muted-foreground">Furnishing:</span> {property.furnishing?.replace(/_/g, " ") ?? "-"}</div>
-              <div><span className="text-muted-foreground">Monthly Rent:</span> {formatCurrency(property.monthlyRent)}</div>
-              <div><span className="text-muted-foreground">Sale Price:</span> {formatCurrency(property.salePrice)}</div>
+              <div><span className="text-muted-foreground">Currency:</span> {property.currency}</div>
+              <div><span className="text-muted-foreground">Monthly Rent:</span> {formatCurrency(property.monthlyRent, property.currency)}</div>
+              <div><span className="text-muted-foreground">Sale Price:</span> {formatCurrency(property.salePrice, property.currency)}</div>
               <div><span className="text-muted-foreground">Available From:</span> {formatDate(property.availableFrom)}</div>
               {property.notes ? (
                 <div className="sm:col-span-2"><span className="text-muted-foreground">Notes:</span> {property.notes}</div>
@@ -218,7 +225,7 @@ export function PropertyDetailView({ property }: PropertyDetailProps) {
               <CardContent className="text-sm space-y-1">
                 <p>Tenant: {activeLease.tenantName}</p>
                 <p>Period: {formatDate(activeLease.startDate)} to {formatDate(activeLease.endDate)}</p>
-                <p>Rent: {formatCurrency(activeLease.rentAmount)}</p>
+                <p>Rent: {formatCurrency(activeLease.rentAmount, activeLease.currency)}</p>
                 <ButtonLink size="sm" className="mt-2" href={`/leases/${activeLease.id}`}>
                   View Lease
                 </ButtonLink>

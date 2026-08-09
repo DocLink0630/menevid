@@ -5,12 +5,14 @@ import {
   PropertyType,
   ListingPurpose,
   InquiryStatus,
+  Currency,
 } from "@prisma/client";
 import { Resend } from "resend";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { ActivityActions } from "@/lib/constants/activity";
+import { MAX_MONEY } from "@/lib/constants/money";
 import { logActivity } from "@/lib/actions/reports";
 
 function getResend() {
@@ -27,8 +29,15 @@ const ownerListingSchema = z.object({
   bedrooms: z.coerce.number().int().optional(),
   squareFootage: z.coerce.number().optional(),
   unitNumber: z.string().optional(),
-  askingPrice: z.coerce.number().optional(),
-  monthlyRent: z.coerce.number().optional(),
+  askingPrice: z.coerce
+    .number()
+    .max(MAX_MONEY, "Asking price is too large")
+    .optional(),
+  monthlyRent: z.coerce
+    .number()
+    .max(MAX_MONEY, "Monthly rent is too large")
+    .optional(),
+  currency: z.nativeEnum(Currency).default("LKR"),
   isAgentAppointed: z.boolean().optional(),
   remarks: z.string().optional(),
 });
@@ -74,6 +83,7 @@ export async function createOwnerListing(
       unitNumber: parsed.data.unitNumber || null,
       askingPrice: parsed.data.askingPrice ?? null,
       monthlyRent: parsed.data.monthlyRent ?? null,
+      currency: parsed.data.currency,
       isAgentAppointed: parsed.data.isAgentAppointed ?? false,
       remarks: parsed.data.remarks || null,
     },
@@ -114,6 +124,7 @@ export async function updateOwnerListing(
       unitNumber: parsed.data.unitNumber || null,
       askingPrice: parsed.data.askingPrice ?? null,
       monthlyRent: parsed.data.monthlyRent ?? null,
+      currency: parsed.data.currency,
       isAgentAppointed: parsed.data.isAgentAppointed ?? false,
       remarks: parsed.data.remarks || null,
     },
@@ -159,6 +170,7 @@ export async function getOwnerListings(params: {
       squareFootage: l.squareFootage ? Number(l.squareFootage) : null,
       askingPrice: l.askingPrice ? Number(l.askingPrice) : null,
       monthlyRent: l.monthlyRent ? Number(l.monthlyRent) : null,
+      currency: l.currency,
     })),
     total,
     totalPages: Math.ceil(total / perPage),
@@ -180,6 +192,7 @@ export async function getOwnerListing(id: string) {
     squareFootage: listing.squareFootage ? Number(listing.squareFootage) : null,
     askingPrice: listing.askingPrice ? Number(listing.askingPrice) : null,
     monthlyRent: listing.monthlyRent ? Number(listing.monthlyRent) : null,
+    currency: listing.currency,
     emails,
   };
 }

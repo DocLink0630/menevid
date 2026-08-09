@@ -57,6 +57,11 @@ enum LeaseStatus {
   TERMINATED
 }
 
+enum Currency {
+  LKR
+  USD
+}
+
 enum ReminderType {
   RENEWAL_6_WEEKS
   RENEWAL_4_WEEKS
@@ -115,8 +120,9 @@ model Property {
   furnishing    FurnishingStatus?
 
   // Financials
-  monthlyRent Decimal?       @db.Decimal(10, 2)  // null if sale-only
-  salePrice   Decimal?       @db.Decimal(10, 2)  // null if rent-only
+  monthlyRent Decimal?       @db.Decimal(14, 2)  // null if sale-only
+  salePrice   Decimal?       @db.Decimal(14, 2)  // null if rent-only
+  currency    Currency       @default(LKR)
 
   // Status & availability
   status                    PropertyStatus @default(AVAILABLE)
@@ -209,8 +215,9 @@ model OwnerListing {
   squareFootage Decimal?       @db.Decimal(10, 2)
   unitNumber    String?
   purpose       ListingPurpose?
-  askingPrice   Decimal?       @db.Decimal(10, 2)
-  monthlyRent   Decimal?       @db.Decimal(10, 2)
+  askingPrice   Decimal?       @db.Decimal(14, 2)
+  monthlyRent   Decimal?       @db.Decimal(14, 2)
+  currency      Currency       @default(LKR)
 
   // Menavid's role
   isAgentAppointed Boolean @default(false)
@@ -285,8 +292,9 @@ model Lease {
   // Terms
   startDate     DateTime
   endDate       DateTime
-  rentAmount    Decimal  @db.Decimal(10, 2)
-  depositAmount Decimal? @db.Decimal(10, 2)
+  rentAmount    Decimal  @db.Decimal(14, 2)
+  depositAmount Decimal? @db.Decimal(14, 2)
+  currency      Currency @default(LKR)
 
   // Deposit tracking
   depositRefunded   Boolean   @default(false)
@@ -316,8 +324,8 @@ model Lease {
 model RentRevision {
   id            String   @id @default(cuid())
   leaseId       String
-  previousRent  Decimal  @db.Decimal(10, 2)
-  newRent       Decimal  @db.Decimal(10, 2)
+  previousRent  Decimal  @db.Decimal(14, 2)
+  newRent       Decimal  @db.Decimal(14, 2)
   effectiveDate DateTime
   note          String?
   createdAt     DateTime @default(now())
@@ -337,7 +345,7 @@ model RentPayment {
   leaseId   String
   dueDate   DateTime
   paidDate  DateTime?
-  amount    Decimal   @db.Decimal(10, 2)
+  amount    Decimal   @db.Decimal(14, 2)
   isPaid    Boolean   @default(false)
   note      String?
   createdAt DateTime  @default(now())

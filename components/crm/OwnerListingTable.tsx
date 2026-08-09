@@ -4,6 +4,7 @@ import { ButtonLink } from "@/components/shared/ButtonLink";
 import { DataTable } from "@/components/shared/DataTable";
 import { formatCurrency } from "@/lib/utils/format";
 import { cn } from "@/lib/utils";
+import type { Currency } from "@prisma/client";
 
 type ListingRow = {
   id: string;
@@ -16,6 +17,7 @@ type ListingRow = {
   squareFootage: number | null;
   askingPrice: number | null;
   monthlyRent: number | null;
+  currency: Currency;
   isConverted: boolean;
   convertedPropertyId: string | null;
 };
@@ -62,8 +64,8 @@ export function OwnerListingTable({
         {
           header: "Price/Rent",
           cell: (row) => {
-            if (row.askingPrice) return formatCurrency(row.askingPrice);
-            if (row.monthlyRent) return formatCurrency(row.monthlyRent);
+            if (row.askingPrice) return formatCurrency(row.askingPrice, row.currency);
+            if (row.monthlyRent) return formatCurrency(row.monthlyRent, row.currency);
             return "-";
           },
         },
@@ -91,9 +93,18 @@ export function OwnerListingTable({
         {
           header: "Actions",
           cell: (row) => (
-            <ButtonLink variant="ghost" size="xs" href={`/crm/owner-listings/${row.id}`}>
-              View
-            </ButtonLink>
+            <div className="flex gap-1">
+              <ButtonLink variant="ghost" size="xs" href={`/crm/owner-listings/${row.id}`}>
+                View
+              </ButtonLink>
+              <ButtonLink
+                variant="ghost"
+                size="xs"
+                href={`/crm/owner-listings/${row.id}/edit`}
+              >
+                Edit
+              </ButtonLink>
+            </div>
           ),
         },
       ]}

@@ -1,3 +1,5 @@
+import type { Currency } from "@prisma/client";
+
 export const EMPTY = "-";
 
 export function formatDate(date: Date | string | null | undefined): string {
@@ -9,11 +11,15 @@ export function formatDate(date: Date | string | null | undefined): string {
   });
 }
 
-export function formatCurrency(amount: number | string | null | undefined): string {
+export function formatCurrency(
+  amount: number | string | null | undefined,
+  currency: Currency = "LKR",
+): string {
   if (amount === null || amount === undefined) return EMPTY;
-  return new Intl.NumberFormat("en-LK", {
+  const locale = currency === "USD" ? "en-US" : "en-LK";
+  return new Intl.NumberFormat(locale, {
     style: "currency",
-    currency: "LKR",
+    currency,
     minimumFractionDigits: 0,
   }).format(Number(amount));
 }

@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ButtonLink } from "@/components/shared/ButtonLink";
 import { SendEmailDialog } from "@/components/crm/SendEmailDialog";
 import { EmailLogList } from "@/components/crm/EmailLogList";
 import { ConvertToPortfolioButton } from "@/components/crm/ConvertToPortfolioButton";
 import { formatCurrency } from "@/lib/utils/format";
+import type { Currency } from "@prisma/client";
 
 type OwnerListingDetailProps = {
   listing: {
@@ -24,6 +26,7 @@ type OwnerListingDetailProps = {
     unitNumber: string | null;
     askingPrice: number | null;
     monthlyRent: number | null;
+    currency: Currency;
     isConverted: boolean;
     convertedPropertyId: string | null;
     remarks: string | null;
@@ -37,6 +40,9 @@ export function OwnerListingDetail({ listing }: OwnerListingDetailProps) {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap gap-2">
+        <ButtonLink variant="outline" href={`/crm/owner-listings/${listing.id}/edit`}>
+          Edit
+        </ButtonLink>
         {listing.email ? (
           <Button onClick={() => setEmailOpen(true)}>Send Email</Button>
         ) : null}
@@ -62,8 +68,9 @@ export function OwnerListingDetail({ listing }: OwnerListingDetailProps) {
           <div><span className="text-muted-foreground">Bedrooms:</span> {listing.bedrooms ?? "-"}</div>
           <div><span className="text-muted-foreground">Sqft:</span> {listing.squareFootage ?? "-"}</div>
           <div><span className="text-muted-foreground">Unit:</span> {listing.unitNumber ?? "-"}</div>
-          <div><span className="text-muted-foreground">Asking Price:</span> {formatCurrency(listing.askingPrice)}</div>
-          <div><span className="text-muted-foreground">Monthly Rent:</span> {formatCurrency(listing.monthlyRent)}</div>
+          <div><span className="text-muted-foreground">Currency:</span> {listing.currency}</div>
+          <div><span className="text-muted-foreground">Asking Price:</span> {formatCurrency(listing.askingPrice, listing.currency)}</div>
+          <div><span className="text-muted-foreground">Monthly Rent:</span> {formatCurrency(listing.monthlyRent, listing.currency)}</div>
           {listing.remarks ? (
             <div className="sm:col-span-2"><span className="text-muted-foreground">Remarks:</span> {listing.remarks}</div>
           ) : null}

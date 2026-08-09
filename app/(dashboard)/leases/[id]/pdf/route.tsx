@@ -41,15 +41,11 @@ export async function GET(_request: Request, { params }: Props) {
       tenantEmail={lease.tenantEmail}
       startDate={formatDate(lease.startDate)}
       endDate={formatDate(lease.endDate)}
-      rentAmount={formatCurrency(Number(lease.rentAmount))
-        .replace("LKR", "")
-        .trim()}
+      rentAmount={formatCurrency(Number(lease.rentAmount), lease.currency)}
       depositAmount={
         lease.depositAmount
-          ? formatCurrency(Number(lease.depositAmount))
-              .replace("LKR", "")
-              .trim()
-          : "0"
+          ? formatCurrency(Number(lease.depositAmount), lease.currency)
+          : formatCurrency(0, lease.currency)
       }
       paymentDueDay={payment.day}
       paymentFrequency={paymentFrequencyLabel(payment.frequencyMonths)}

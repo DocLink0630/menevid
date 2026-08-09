@@ -15,6 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import { markPaymentPaid } from "@/lib/actions/leases";
+import type { Currency } from "@prisma/client";
 
 type Payment = {
   id: string;
@@ -24,7 +25,13 @@ type Payment = {
   isPaid: boolean;
 };
 
-export function PaymentScheduleTable({ payments }: { payments: Payment[] }) {
+export function PaymentScheduleTable({
+  payments,
+  currency = "LKR",
+}: {
+  payments: Payment[];
+  currency?: Currency;
+}) {
   const router = useRouter();
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
@@ -55,7 +62,7 @@ export function PaymentScheduleTable({ payments }: { payments: Payment[] }) {
         {payments.map((p) => (
           <TableRow key={p.id}>
             <TableCell>{formatDate(p.dueDate)}</TableCell>
-            <TableCell>{formatCurrency(p.amount)}</TableCell>
+            <TableCell>{formatCurrency(p.amount, currency)}</TableCell>
             <TableCell>{p.paidDate ? formatDate(p.paidDate) : "-"}</TableCell>
             <TableCell>
               <Badge variant="outline" className={p.isPaid ? "bg-green-50" : ""}>

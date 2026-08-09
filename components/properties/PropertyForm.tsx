@@ -11,6 +11,7 @@ import {
   ListingPurpose,
   PropertyStatus,
   FurnishingStatus,
+  Currency,
 } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +39,7 @@ import { createProperty,
   updateProperty,
   type PropertyFormData,
 } from "@/lib/actions/properties";
+import { CURRENCIES } from "@/lib/constants/money";
 
 const optionalNumber = z.preprocess((val) => {
   if (val === "" || val === null || val === undefined) return undefined;
@@ -60,6 +62,7 @@ const formSchema = z
     furnishing: z.nativeEnum(FurnishingStatus).optional(),
     monthlyRent: optionalNumber,
     salePrice: optionalNumber,
+    currency: z.nativeEnum(Currency).default("LKR"),
     status: z.nativeEnum(PropertyStatus),
     temporaryUnavailableUntil: z.string().optional(),
     availableFrom: z.string().optional(),
@@ -138,6 +141,7 @@ export function PropertyForm({
       unitNumber: "",
       type: "APARTMENT",
       purpose: "RENT",
+      currency: "LKR",
       status: "AVAILABLE",
       ...defaultValues,
       temporaryUnavailableUntil: toDateInput(
@@ -158,7 +162,13 @@ export function PropertyForm({
   const showSale =
     watchPurpose === "SALE" || watchPurpose === "RENT_AND_SALE";
   const isHouse = watchType === "HOUSE";
-  const sizeLabel = isHouse ? "Size of the Land" : "Square Footage";
+  const isLandOrCommercial =
+    watchType === "LAND" || watchType === "COMMERCIAL";
+  const sizeLabel = isHouse
+    ? "Size of the Land"
+    : isLandOrCommercial
+      ? "Perches"
+      : "Square Footage";
 
   async function onSubmit(values: FormValues) {
     if (owners.length === 0) {
@@ -293,7 +303,13 @@ export function PropertyForm({
                   type="number"
                   min={0}
                   step="0.01"
-                  placeholder={isHouse ? "e.g. perch / sqft of land" : undefined}
+                  placeholder={
+                    isHouse
+                      ? "e.g. perch / sqft of land"
+                      : isLandOrCommercial
+                        ? "e.g. 10"
+                        : undefined
+                  }
                   value={field.value ?? ""}
                   onChange={field.onChange}
                 />
@@ -348,13 +364,37 @@ export function PropertyForm({
             )}
           />
         ) : null}
+        {(showRent || showSale) ? (
+          <FormField
+            control={form.control}
+            name="currency"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Currency</FormLabel>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CURRENCIES.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        ) : null}
         {showRent ? (
           <FormField
             control={form.control}
             name="monthlyRent"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Monthly Rent (LKR)</FormLabel>
+                <FormLabel>Monthly Rent</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -373,7 +413,7 @@ export function PropertyForm({
             name="salePrice"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Sale Price (LKR)</FormLabel>
+                <FormLabel>Sale Price</FormLabel>
                 <FormControl>
                   <Input type="number" {...field} />
                 </FormControl>

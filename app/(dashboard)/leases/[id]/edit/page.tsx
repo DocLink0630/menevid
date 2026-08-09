@@ -30,6 +30,7 @@ export default async function EditLeasePage({ params }: Props) {
             id: lease.property.id,
             name: lease.property.name,
             unitNumber: lease.property.unitNumber,
+            currency: lease.property.currency,
           },
           ...properties.filter((p) => p.id !== lease.property.id),
         ]}
@@ -44,6 +45,7 @@ export default async function EditLeasePage({ params }: Props) {
           endDate: lease.endDate.toISOString().split("T")[0],
           rentAmount: lease.rentAmount,
           depositAmount: lease.depositAmount ?? undefined,
+          currency: lease.currency,
           paymentDueDay: payment.day,
           paymentFrequencyMonths: payment.frequencyMonths,
         }}

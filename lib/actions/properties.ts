@@ -6,11 +6,13 @@ import {
   ListingPurpose,
   PropertyStatus,
   FurnishingStatus,
+  Currency,
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { ActivityActions } from "@/lib/constants/activity";
+import { MAX_MONEY } from "@/lib/constants/money";
 import { logActivity } from "@/lib/actions/reports";
 import { createNewListingReminder } from "@/lib/utils/reminder-engine";
 
@@ -28,8 +30,15 @@ const propertySchema = z
     squareFootage: z.number().optional(),
     bedrooms: z.number().int().optional(),
     furnishing: z.nativeEnum(FurnishingStatus).optional(),
-    monthlyRent: z.number().optional(),
-    salePrice: z.number().optional(),
+    monthlyRent: z
+      .number()
+      .max(MAX_MONEY, "Monthly rent is too large")
+      .optional(),
+    salePrice: z
+      .number()
+      .max(MAX_MONEY, "Sale price is too large")
+      .optional(),
+    currency: z.nativeEnum(Currency).default("LKR"),
     status: z.nativeEnum(PropertyStatus),
     temporaryUnavailableUntil: z.string().optional(),
     availableFrom: z.string().optional(),
@@ -94,6 +103,7 @@ function serializeProperty(property: {
   furnishing: FurnishingStatus | null;
   monthlyRent: { toNumber?: () => number } | null;
   salePrice: { toNumber?: () => number } | null;
+  currency: Currency;
   status: PropertyStatus;
   temporaryUnavailableUntil: Date | null;
   availableFrom: Date | null;
@@ -134,6 +144,7 @@ export async function createProperty(data: PropertyFormData) {
         furnishing: d.furnishing ?? null,
         monthlyRent: d.monthlyRent ?? null,
         salePrice: d.salePrice ?? null,
+        currency: d.currency,
         status: d.status,
         temporaryUnavailableUntil: parseDate(d.temporaryUnavailableUntil),
         availableFrom: parseDate(d.availableFrom),
@@ -223,6 +234,7 @@ export async function updateProperty(id: string, data: PropertyFormData) {
         furnishing: d.furnishing ?? null,
         monthlyRent: d.monthlyRent ?? null,
         salePrice: d.salePrice ?? null,
+        currency: d.currency,
         status: d.status,
         temporaryUnavailableUntil: parseDate(d.temporaryUnavailableUntil),
         availableFrom: parseDate(d.availableFrom),
@@ -435,6 +447,7 @@ export async function getOwnerListingForConvert(id: string) {
       : null,
     askingPrice: listing.askingPrice ? Number(listing.askingPrice) : null,
     monthlyRent: listing.monthlyRent ? Number(listing.monthlyRent) : null,
+    currency: listing.currency,
   };
 }
 
@@ -464,5 +477,6 @@ export async function getAvailablePropertiesForLease() {
     id: p.id,
     name: p.name,
     unitNumber: p.unitNumber,
+    currency: p.currency,
   }));
 }

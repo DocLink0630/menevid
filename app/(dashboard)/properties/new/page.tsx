@@ -2,6 +2,8 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { BackButton } from "@/components/shared/BackButton";
 import { PropertyForm } from "@/components/properties/PropertyForm";
 import { getOwnerListingForConvert } from "@/lib/actions/properties";
+import { ensureOwnerFromListing } from "@/lib/actions/owners";
+import type { OwnerEntry } from "@/components/properties/OwnerSelect";
 
 type Props = {
   searchParams: Promise<{ fromListing?: string }>;
@@ -11,6 +13,7 @@ export default async function NewPropertyPage({ searchParams }: Props) {
   const params = await searchParams;
   let defaultValues = {};
   let fromListingId: string | undefined;
+  let defaultOwners: OwnerEntry[] = [];
 
   if (params.fromListing) {
     const listing = await getOwnerListingForConvert(params.fromListing);
@@ -25,8 +28,24 @@ export default async function NewPropertyPage({ searchParams }: Props) {
         squareFootage: listing.squareFootage ?? undefined,
         monthlyRent: listing.monthlyRent ?? undefined,
         salePrice: listing.askingPrice ?? undefined,
+        currency: listing.currency ?? "LKR",
         notes: listing.remarks ?? "",
       };
+
+      const ownerResult = await ensureOwnerFromListing({
+        fullName: listing.fullName,
+        phone: listing.phone,
+        email: listing.email,
+      });
+      if (ownerResult.success) {
+        defaultOwners = [
+          {
+            ownerId: ownerResult.data.id,
+            fullName: ownerResult.data.fullName,
+            isPrimary: true,
+          },
+        ];
+      }
     }
   }
 
@@ -43,6 +62,7 @@ export default async function NewPropertyPage({ searchParams }: Props) {
       />
       <PropertyForm
         defaultValues={defaultValues}
+        defaultOwners={defaultOwners}
         fromListingId={fromListingId}
       />
     </div>

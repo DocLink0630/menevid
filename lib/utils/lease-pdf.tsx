@@ -105,11 +105,11 @@ export function LeaseAgreementPDF({
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>Rent Amount:</Text>
-            <Text style={styles.value}>LKR {rentAmount}</Text>
+            <Text style={styles.value}>{rentAmount}</Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>Deposit:</Text>
-            <Text style={styles.value}>LKR {depositAmount}</Text>
+            <Text style={styles.value}>{depositAmount}</Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>Payment Frequency:</Text>

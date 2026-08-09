@@ -88,7 +88,7 @@ async function reminderExists(
 export async function generateLeaseReminders(
   lease: Pick<
     Lease,
-    "id" | "endDate" | "propertyId" | "tenantName" | "rentAmount"
+    "id" | "endDate" | "propertyId" | "tenantName" | "rentAmount" | "currency"
   >,
   propertyName: string,
   userId: string,
@@ -99,6 +99,7 @@ export async function generateLeaseReminders(
     "RENEWAL_6_WEEKS",
     "RENEWAL_4_WEEKS",
   ];
+  const currency = lease.currency ?? "LKR";
 
   for (const type of renewalTypes) {
     const exists = await reminderExists(tx, type, lease.id);
@@ -108,7 +109,7 @@ export async function generateLeaseReminders(
         data: {
           type,
           title: `Lease renewal in ${weeks}`,
-          message: `Lease for ${propertyName} (${lease.tenantName}) expires on ${lease.endDate.toLocaleDateString("en-LK")}. Rent: LKR ${Number(lease.rentAmount).toLocaleString()}.`,
+          message: `Lease for ${propertyName} (${lease.tenantName}) expires on ${lease.endDate.toLocaleDateString("en-LK")}. Rent: ${currency} ${Number(lease.rentAmount).toLocaleString()}.`,
           dueDate: lease.endDate,
           propertyId: lease.propertyId,
           leaseId: lease.id,
@@ -133,7 +134,7 @@ export async function generateLeaseReminders(
           data: {
             type: "PAYMENT_DUE",
             title: "Rent payment due",
-            message: `Rent payment of LKR ${Number(lease.rentAmount).toLocaleString()} due for ${propertyName} (${lease.tenantName}) on ${payment.dueDate.toLocaleDateString("en-LK")}.`,
+            message: `Rent payment of ${currency} ${Number(lease.rentAmount).toLocaleString()} due for ${propertyName} (${lease.tenantName}) on ${payment.dueDate.toLocaleDateString("en-LK")}.`,
             dueDate: payment.dueDate,
             propertyId: lease.propertyId,
             leaseId: lease.id,
@@ -160,7 +161,7 @@ export async function generateLeaseReminders(
           data: {
             type: "PAYMENT_DUE",
             title: "Rent payment due",
-            message: `Rent payment of LKR ${Number(lease.rentAmount).toLocaleString()} due for ${propertyName} (${lease.tenantName}) on ${payment.dueDate.toLocaleDateString("en-LK")}.`,
+            message: `Rent payment of ${currency} ${Number(lease.rentAmount).toLocaleString()} due for ${propertyName} (${lease.tenantName}) on ${payment.dueDate.toLocaleDateString("en-LK")}.`,
             dueDate: payment.dueDate,
             propertyId: lease.propertyId,
             leaseId: lease.id,

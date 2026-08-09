@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { LeaseStatus } from "@prisma/client";
+import { Currency, LeaseStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
@@ -13,6 +13,7 @@ import {
 } from "@/lib/utils/reminder-engine";
 import { encodePaymentDue } from "@/lib/utils/payment-frequency";
 import { differenceInCalendarMonths } from "date-fns";
+import { MAX_MONEY } from "@/lib/constants/money";
 
 const leaseSchema = z.object({
   propertyId: z.string().min(1),
@@ -22,8 +23,15 @@ const leaseSchema = z.object({
   tenantNic: z.string().optional(),
   startDate: z.string().min(1),
   endDate: z.string().min(1),
-  rentAmount: z.coerce.number().positive(),
-  depositAmount: z.coerce.number().optional(),
+  rentAmount: z.coerce
+    .number()
+    .positive()
+    .max(MAX_MONEY, "Rent amount is too large"),
+  depositAmount: z.coerce
+    .number()
+    .max(MAX_MONEY, "Deposit amount is too large")
+    .optional(),
+  currency: z.nativeEnum(Currency).default("LKR"),
   /** Day of month 1-28 */
   paymentDueDay: z.coerce.number().int().min(1).max(28),
   /** Payment interval in months: 1, 3, 4, 6, 12 */
@@ -37,7 +45,11 @@ const leaseSchema = z.object({
 
 const renewSchema = z.object({
   newEndDate: z.string().min(1),
-  newRentAmount: z.number().positive(),
+  newRentAmount: z
+    .number()
+    .positive()
+    .max(MAX_MONEY, "Rent amount is too large"),
+  currency: z.nativeEnum(Currency).optional(),
   note: z.string().optional(),
 });
 
@@ -104,6 +116,7 @@ export async function createLease(data: z.infer<typeof leaseSchema>) {
           endDate,
           rentAmount: parsed.data.rentAmount,
           depositAmount: parsed.data.depositAmount ?? null,
+          currency: parsed.data.currency,
           paymentDueDay: paymentDueDayEncoded,
           status: "ACTIVE",
         },
@@ -163,6 +176,7 @@ export async function updateLease(
     tenantEmail?: string | null;
     tenantNic?: string | null;
     depositAmount?: number;
+    currency?: Currency;
     paymentDueDay?: number;
   } = {
     tenantName: data.tenantName,
@@ -170,6 +184,7 @@ export async function updateLease(
     tenantEmail: data.tenantEmail || null,
     tenantNic: data.tenantNic || null,
     depositAmount: data.depositAmount ?? undefined,
+    currency: data.currency,
   };
 
   if (data.paymentDueDay != null) {
@@ -233,6 +248,7 @@ export async function renewLease(
       data: {
         endDate: newEndDate,
         rentAmount: parsed.data.newRentAmount,
+        ...(parsed.data.currency ? { currency: parsed.data.currency } : {}),
       },
     });
 
@@ -393,6 +409,7 @@ export async function getLeases(params: {
       startDate: l.startDate,
       endDate: l.endDate,
       rentAmount: Number(l.rentAmount),
+      currency: l.currency,
       status: l.status,
     })),
     total,

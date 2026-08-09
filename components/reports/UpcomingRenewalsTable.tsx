@@ -8,6 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatCurrency, formatDate, daysUntil } from "@/lib/utils/format";
+import type { Currency } from "@prisma/client";
 
 type Renewal = {
   id: string;
@@ -16,6 +17,7 @@ type Renewal = {
   tenantName: string;
   endDate: Date;
   rentAmount: number;
+  currency: Currency;
 };
 
 export function UpcomingRenewalsTable({ renewals }: { renewals: Renewal[] }) {
@@ -47,7 +49,7 @@ export function UpcomingRenewalsTable({ renewals }: { renewals: Renewal[] }) {
             <TableCell>{r.tenantName}</TableCell>
             <TableCell>{formatDate(r.endDate)}</TableCell>
             <TableCell>{daysUntil(r.endDate)} days</TableCell>
-            <TableCell>{formatCurrency(r.rentAmount)}</TableCell>
+            <TableCell>{formatCurrency(r.rentAmount, r.currency)}</TableCell>
           </TableRow>
         ))}
       </TableBody>

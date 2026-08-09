@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import {
   PropertyType,
   ListingPurpose,
+  Currency,
 } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +33,7 @@ import {
   createOwnerListing,
   updateOwnerListing,
 } from "@/lib/actions/crm";
+import { CURRENCIES } from "@/lib/constants/money";
 
 const schema = z.object({
   fullName: z.string().min(1),
@@ -45,6 +47,7 @@ const schema = z.object({
   unitNumber: z.string().optional(),
   askingPrice: z.coerce.number().optional(),
   monthlyRent: z.coerce.number().optional(),
+  currency: z.nativeEnum(Currency).default("LKR"),
   remarks: z.string().optional(),
 });
 
@@ -64,20 +67,27 @@ export function OwnerListingForm({
     resolver: zodResolver(schema) as Resolver<FormValues>,
     defaultValues: {
       fullName: "",
+      currency: "LKR",
       ...defaultValues,
     },
   });
 
   const watchPurpose = form.watch("purpose");
+  const watchPropertyType = form.watch("propertyType");
+  const showBedrooms = watchPropertyType !== "LAND";
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function onSubmit(values: FormValues) {
     setLoading(true);
     setError(null);
+    const payload =
+      values.propertyType === "LAND"
+        ? { ...values, bedrooms: undefined }
+        : values;
     const result = listingId
-      ? await updateOwnerListing(listingId, values)
-      : await createOwnerListing(values);
+      ? await updateOwnerListing(listingId, payload)
+      : await createOwnerListing(payload);
     if ("error" in result && result.error) {
       setError(result.error);
       setLoading(false);
@@ -112,7 +122,15 @@ export function OwnerListingForm({
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField control={form.control} name="propertyType" render={({ field }) => (
             <FormItem><FormLabel>Type</FormLabel>
-              <Select value={field.value ?? ""} onValueChange={field.onChange}>
+              <Select
+                value={field.value ?? ""}
+                onValueChange={(value) => {
+                  if (value === "LAND") {
+                    form.setValue("bedrooms", undefined);
+                  }
+                  field.onChange(value);
+                }}
+              >
                 <FormControl><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger></FormControl>
                 <SelectContent>{Object.values(PropertyType).map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
               </Select><FormMessage /></FormItem>
@@ -126,9 +144,11 @@ export function OwnerListingForm({
           )} />
         </div>
         <div className="grid gap-4 sm:grid-cols-3">
-          <FormField control={form.control} name="bedrooms" render={({ field }) => (
-            <FormItem><FormLabel>Bedrooms</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-          )} />
+          {showBedrooms ? (
+            <FormField control={form.control} name="bedrooms" render={({ field }) => (
+              <FormItem><FormLabel>Bedrooms</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+          ) : null}
           <FormField control={form.control} name="squareFootage" render={({ field }) => (
             <FormItem><FormLabel>Sqft</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
@@ -136,14 +156,23 @@ export function OwnerListingForm({
             <FormItem><FormLabel>Unit No.</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
           )} />
         </div>
+        {(watchPurpose === "SALE" || watchPurpose === "RENT_AND_SALE" || watchPurpose === "RENT") ? (
+          <FormField control={form.control} name="currency" render={({ field }) => (
+            <FormItem><FormLabel>Currency</FormLabel>
+              <Select value={field.value} onValueChange={field.onChange}>
+                <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                <SelectContent>{CURRENCIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+              </Select><FormMessage /></FormItem>
+          )} />
+        ) : null}
         {(watchPurpose === "SALE" || watchPurpose === "RENT_AND_SALE") ? (
           <FormField control={form.control} name="askingPrice" render={({ field }) => (
-            <FormItem><FormLabel>Asking Price (LKR)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel>Asking Price</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
         ) : null}
         {(watchPurpose === "RENT" || watchPurpose === "RENT_AND_SALE") ? (
           <FormField control={form.control} name="monthlyRent" render={({ field }) => (
-            <FormItem><FormLabel>Monthly Rent (LKR)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem><FormLabel>Monthly Rent</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
         ) : null}
         <FormField control={form.control} name="remarks" render={({ field }) => (

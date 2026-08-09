@@ -2,7 +2,7 @@ import { ButtonLink } from "@/components/shared/ButtonLink";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/shared/DataTable";
 import { formatCurrency, formatDate, daysUntil } from "@/lib/utils/format";
-import type { LeaseStatus } from "@prisma/client";
+import type { Currency, LeaseStatus } from "@prisma/client";
 
 type LeaseRow = {
   id: string;
@@ -12,6 +12,7 @@ type LeaseRow = {
   startDate: Date;
   endDate: Date;
   rentAmount: number;
+  currency: Currency;
   status: LeaseStatus;
 };
 
@@ -43,8 +44,8 @@ export function LeaseTable({
         { header: "Start", cell: (row) => formatDate(row.startDate) },
         { header: "End", cell: (row) => formatDate(row.endDate) },
         {
-          header: "Rent (LKR)",
-          cell: (row) => formatCurrency(row.rentAmount),
+          header: "Rent",
+          cell: (row) => formatCurrency(row.rentAmount, row.currency),
         },
         {
           header: "Status",

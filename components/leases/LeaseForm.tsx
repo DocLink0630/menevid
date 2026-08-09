@@ -46,11 +46,13 @@ import {
 } from "@/components/ui/popover";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Currency } from "@prisma/client";
 import { createLease, updateLease } from "@/lib/actions/leases";
 import {
   PAYMENT_FREQUENCIES,
   type PaymentFrequencyMonths,
 } from "@/lib/utils/payment-frequency";
+import { CURRENCIES } from "@/lib/constants/money";
 
 const optionalNumber = z.preprocess((val) => {
   if (val === "" || val === null || val === undefined) return undefined;
@@ -86,13 +88,19 @@ const schema = z.object({
   endDate: z.string().min(1, "End date is required"),
   rentAmount: requiredPositive,
   depositAmount: optionalNumber,
+  currency: z.nativeEnum(Currency).default("LKR"),
   paymentDueDay: dayNumber,
   paymentFrequencyMonths: freqNumber,
 });
 
 type FormValues = z.infer<typeof schema>;
 
-type PropertyOption = { id: string; name: string; unitNumber: string | null };
+type PropertyOption = {
+  id: string;
+  name: string;
+  unitNumber: string | null;
+  currency?: Currency;
+};
 
 type LeaseFormProps = {
   properties: PropertyOption[];
@@ -126,6 +134,7 @@ export function LeaseForm({ properties, leaseId, defaultValues }: LeaseFormProps
       tenantNic: "",
       startDate: "",
       endDate: "",
+      currency: "LKR",
       paymentDueDay: 1,
       paymentFrequencyMonths: 1,
       ...defaultValues,
@@ -219,6 +228,9 @@ export function LeaseForm({ properties, leaseId, defaultValues }: LeaseFormProps
                                 value={`${p.name} ${p.unitNumber ?? ""} ${p.id}`}
                                 onSelect={() => {
                                   field.onChange(p.id);
+                                  if (!leaseId && p.currency) {
+                                    form.setValue("currency", p.currency);
+                                  }
                                   setOpen(false);
                                 }}
                               >
@@ -328,13 +340,35 @@ export function LeaseForm({ properties, leaseId, defaultValues }: LeaseFormProps
             <FormDescription>
               Lease must be at least 6 months in duration.
             </FormDescription>
+            <FormField
+              control={form.control}
+              name="currency"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Currency</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CURRENCIES.map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {c}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="rentAmount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Rent Amount (LKR) *</FormLabel>
+                    <FormLabel>Rent Amount *</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -356,7 +390,7 @@ export function LeaseForm({ properties, leaseId, defaultValues }: LeaseFormProps
                 name="depositAmount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Deposit (LKR)</FormLabel>
+                    <FormLabel>Deposit</FormLabel>
                     <FormControl>
                       <Input
                         type="number"

@@ -8,6 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatCurrency, formatDate, daysUntil } from "@/lib/utils/format";
+import type { Currency } from "@prisma/client";
 
 type OverduePayment = {
   id: string;
@@ -16,6 +17,7 @@ type OverduePayment = {
   tenantName: string;
   dueDate: Date;
   amount: number;
+  currency: Currency;
 };
 
 export function OverduePaymentsTable({
@@ -48,7 +50,7 @@ export function OverduePaymentsTable({
             </TableCell>
             <TableCell>{p.tenantName}</TableCell>
             <TableCell>{formatDate(p.dueDate)}</TableCell>
-            <TableCell>{formatCurrency(p.amount)}</TableCell>
+            <TableCell>{formatCurrency(p.amount, p.currency)}</TableCell>
             <TableCell>{Math.abs(daysUntil(p.dueDate))} days</TableCell>
           </TableRow>
         ))}

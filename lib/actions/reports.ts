@@ -74,6 +74,7 @@ export async function getUpcomingRenewals() {
     tenantName: lease.tenantName,
     endDate: lease.endDate,
     rentAmount: Number(lease.rentAmount),
+    currency: lease.currency,
   }));
 }
 
@@ -100,6 +101,7 @@ export async function getOverduePayments() {
     tenantName: payment.lease.tenantName,
     dueDate: payment.dueDate,
     amount: Number(payment.amount),
+    currency: payment.lease.currency,
   }));
 }
 

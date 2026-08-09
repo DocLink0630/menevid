@@ -32,6 +32,7 @@ export default async function EditPropertyPage({ params }: Props) {
           furnishing: property.furnishing ?? undefined,
           monthlyRent: property.monthlyRent ?? undefined,
           salePrice: property.salePrice ?? undefined,
+          currency: property.currency,
           status: property.status,
           temporaryUnavailableUntil: toDateInput(
             property.temporaryUnavailableUntil,

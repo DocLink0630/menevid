@@ -51,12 +51,13 @@ export async function GET(request: Request) {
     const renewals = await getUpcomingRenewals();
     const buffer = buildExcelBuffer(
       "Upcoming Renewals",
-      ["Property", "Unit", "Tenant", "End Date", "Rent (LKR)"],
+      ["Property", "Unit", "Tenant", "End Date", "Currency", "Rent"],
       renewals.map((r) => [
         r.propertyName,
         r.unitNumber ?? "",
         r.tenantName,
         formatDate(r.endDate),
+        r.currency,
         r.rentAmount,
       ]),
     );
@@ -67,12 +68,13 @@ export async function GET(request: Request) {
     const payments = await getOverduePayments();
     const buffer = buildExcelBuffer(
       "Overdue Payments",
-      ["Property", "Unit", "Tenant", "Due Date", "Amount (LKR)"],
+      ["Property", "Unit", "Tenant", "Due Date", "Currency", "Amount"],
       payments.map((p) => [
         p.propertyName,
         p.unitNumber ?? "",
         p.tenantName,
         formatDate(p.dueDate),
+        p.currency,
         p.amount,
       ]),
     );
